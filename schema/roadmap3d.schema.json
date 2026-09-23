@@ -1,7 +1,7 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "$id": "https://example.invalid/layergraph.schema.json",
-  "title": "layergraph spec",
+  "$id": "https://example.invalid/roadmap3d.schema.json",
+  "title": "roadmap3d spec",
   "description": "One JSON file → one layered 3D graph animation. Text fields accept a plain string or {\"zh\": \"…\", \"en\": \"…\"}; the CLI --lang (or meta.lang) picks one and falls back to the other. Comments (// and /* */) and trailing commas are tolerated by the CLI.",
   "type": "object",
   "required": ["layers", "nodes"],

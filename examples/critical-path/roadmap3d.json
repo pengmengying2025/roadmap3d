@@ -1,5 +1,5 @@
 {
-  "$schema": "../../schema/layergraph.schema.json",
+  "$schema": "../../schema/roadmap3d.schema.json",
   // Synthetic project plan. Layers = phases (bottom = earliest), groups = teams, no depth axis.
   // Edges point from a task to the tasks that wait for it; the highlight path is the critical path.
   "meta": { "title": { "zh": "项目关键路径（示例）", "en": "Project Critical Path (sample)" }, "subtitle": { "zh": "五个阶段 · 按团队分道 · 一条关键路径决定上线日", "en": "five phases · lanes by team · one critical path sets the launch date" }, "preset": "ivory-indigo", "duration": 19, "lang": "en" },

@@ -1,9 +1,9 @@
-# Prompt template · build a layergraph animation from scratch
+# Prompt template · build a roadmap3d animation from scratch
 
-Paste into Claude Code / Cursor inside the `layergraph` repository. Replace the ⟨…⟩ parts.
+Paste into Claude Code / Cursor inside the `roadmap3d` repository. Replace the ⟨…⟩ parts.
 
 ```
-You are working in the layergraph repo (read SKILL.md first). Build a new animation spec and render it.
+You are working in the roadmap3d repo (read SKILL.md first). Build a new animation spec and render it.
 
 DATA
 ⟨paste a list / CSV / markdown table of nodes: name, which layer, which group, optional depth level, optional parent⟩
@@ -16,7 +16,7 @@ STORY
 - Duration ⟨21⟩ s, preset ⟨ivory-gold|ivory-indigo|slate-gold|midnight|obsidian-gold⟩, languages ⟨zh, en⟩, brand line ⟨title / subtitle⟩.
 
 DO
-1. Write examples/⟨name⟩/layergraph.json following schema/layergraph.schema.json. Layers bottom→top, groups as lanes,
+1. Write examples/⟨name⟩/roadmap3d.json following schema/roadmap3d.schema.json. Layers bottom→top, groups as lanes,
    depth only if the data has an ordinal level. Use minor nodes for sub-items shown near a parent, leaf nodes for attachments.
 2. Keep every visible string bilingual ({"zh","en"}). Captions ≤ 40 characters; *word* marks the accent.
 3. Run `node src/cli.mjs validate …`, fix all errors, explain any warnings you keep.

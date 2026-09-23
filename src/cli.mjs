@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// layergraph CLI — validate | test | render | still | cover | strip | info
+// roadmap3d CLI — validate | test | render | still | cover | strip | info
 import fs from 'node:fs';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
@@ -16,7 +16,7 @@ for (let i = 0; i < args.length; i++) { const a = args[i]; const next = () => ar
   else if (a === '--ffmpeg') opt.ffmpeg = next(); else if (a === '--second') opt.strip = 'second'; else if (a === '--reverse') opt.order = 'reverse'; else if (a === '--width') opt.width = +next(); else if (a === '--times') opt.times = next().split(',').map(Number); else if (a === '--no-video') opt.noVideo = true;
   else if (a.startsWith('-')) die(`unknown option ${a}`); else pos.push(a); }
 function die(m, code = 1) { console.error('✗ ' + m); process.exit(code); }
-const HELP = `layergraph <command> <spec.json> [options]
+const HELP = `roadmap3d <command> <spec.json> [options]
   validate  spec.json                       check structure, references, timing, text coverage (exit 1 on errors)
   info      spec.json                       resolved timeline: lanes, camera keyframes, lit times (needs a browser)
   test      spec.json -o out/ [--times a,b] key frames (captions, camera, lit) + far/near frames → out/test_*.png, out/timeline.json

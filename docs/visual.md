@@ -1,6 +1,6 @@
 # Visual guide — why the path lights up
 
-Five presets ship with layergraph — two ivory (light) ones and three dark ones. They differ in mood, not in method: each applies the same four rules, the same type rules, and the engine adds the same finishing touches on top. 中文版在下半部分。
+Five presets ship with roadmap3d — two ivory (light) ones and three dark ones. They differ in mood, not in method: each applies the same four rules, the same type rules, and the engine adds the same finishing touches on top. 中文版在下半部分。
 
 ## 1. The four rules
 

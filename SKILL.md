@@ -1,10 +1,10 @@
 ---
-name: layergraph
-description: Render a layered 3D graph animation (MP4 + GIF preview + cover PNG + 2D strip) from one JSON spec — layers, groups, an optional depth dimension, edges, a highlight path that lights up in sequence, camera keyframes, zh/en captions. Use when the user wants a "light up the path" graph video for a slide deck or explainer — supply-chain provenance, a project's critical path, a module build order, any tiered dependency or flow — or a still frame / 2D strip of such a graph. Headless (three.js in Chromium + ffmpeg), no GUI.
+name: roadmap3d
+description: Render an animated 3D roadmap — a layered graph animation (MP4 + GIF preview + cover PNG + 2D strip) — from one JSON spec — layers, groups, an optional depth dimension, edges, a highlight path that lights up in sequence, camera keyframes, zh/en captions. Use when the user wants a "light up the path" graph video for a slide deck or explainer — supply-chain provenance, a project's critical path, a module build order, any tiered dependency or flow — or a still frame / 2D strip of such a graph. Headless (three.js in Chromium + ffmpeg), no GUI.
 license: MIT
 ---
 
-# layergraph — Agent Skill
+# roadmap3d — Agent Skill
 
 ## When to use
 - The user has (or can describe) **nodes that belong to ordered layers** (tiers, phases, levels) and **edges** between them, and wants a short **video** in which one path lights up, or a **still / strip** of that graph.

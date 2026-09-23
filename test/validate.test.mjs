@@ -9,7 +9,7 @@ const load = p => JSON.parse(stripJsonComments(fs.readFileSync(p, 'utf8')));
 
 test('the three example specs validate without errors', () => {
   for (const e of ['supply-chain', 'critical-path', 'deps']) {
-    const v = validateSpec(load(path.join(ROOT, 'examples', e, 'layergraph.json')), { lang: 'zh' });
+    const v = validateSpec(load(path.join(ROOT, 'examples', e, 'roadmap3d.json')), { lang: 'zh' });
     assert.deepEqual(v.errors, [], e + ': ' + v.errors.join('; '));
   }
 });

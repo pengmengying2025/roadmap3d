@@ -1,8 +1,24 @@
-# layergraph
+# Roadmap 3D Video
 
-**一份 JSON 规格 → 一段分层 3D 图谱动画（MP4 + GIF 预览 + 封面 PNG + 2D 横带）。**
-layergraph 把分层的依赖或流程——供应层级、项目阶段、软件模块——做成一条安静的短片，让其中一条路径逐段亮起，直接放进幻灯片、报告或 README。
-层、分组、可选的深度维度、边、*一条会亮起来的高亮路径*、镜头关键帧、中英字幕。three.js 在无头 Chromium 里逐帧渲染，ffmpeg 编码。给人用，也给编码 agent 用（见 [SKILL.md](SKILL.md) 与 [prompts/](prompts/)）。
+<sub>package: <code>roadmap3d</code></sub>
+
+[![version 1.0.1](https://img.shields.io/badge/version-1.0.1-2B2B2B)](CHANGELOG.md) [![license MIT](https://img.shields.io/badge/license-MIT-C99A2E)](LICENSE) [![node ≥ 18](https://img.shields.io/badge/node-%E2%89%A5%2018-8C9A92)](package.json) [![three.js 0.186](https://img.shields.io/badge/three.js-0.186-8C9A92)](docs/licenses.md)
+
+**把一张路线图——层级加依赖——做成 20–30 秒的 3D 讲解视频，让其中一条路径逐段亮起。**
+
+- **你给它**：一个 JSON 文件——层、分组、边、要点亮的路径、字幕。
+- **你得到**：MP4、GIF 预览、封面 PNG 和 2D 横带。
+- **适用场景**：学习 / 技能路线图、供应链溯源、项目关键路径、软件模块依赖。
+
+```bash
+npm install && npx playwright install chromium && scripts/get_fonts.sh    # 一次
+node src/cli.mjs test   examples/supply-chain/roadmap3d.json -o out/demo    # 先看关键帧
+node src/cli.mjs render examples/supply-chain/roadmap3d.json -o out/demo    # 需要 ffmpeg（PATH、$FFMPEG 或 pip install imageio-ffmpeg）
+```
+
+给人用，也给编码 agent 用——见 [SKILL.md](SKILL.md) / [prompts/](prompts/)。
+
+**关键词：** 路线图 · 3D · 知识图谱 · 依赖图 · 关键路径 · 供应链 · 数据可视化 · 图可视化 · 动画 · three.js · 视频生成 · JSON · 无头渲染 · Agent 技能
 
 [English →](README.md) · **Showcase：** *（留空——见 [Showcase](#showcase)）*
 
@@ -11,7 +27,11 @@ layergraph 把分层的依赖或流程——供应层级、项目阶段、软件
 | ![](examples/supply-chain/render/preview.gif) | ![](examples/critical-path/render/preview.gif) | ![](examples/deps/render/preview.gif) |
 | ![](examples/supply-chain/render/contact.png) | ![](examples/critical-path/render/contact.png) | ![](examples/deps/render/contact.png) |
 
-完整视频（1080p MP4，每段约 20 秒）见 [Releases → v1.0.0](https://github.com/pengmengying2025/layergraph/releases/tag/v1.0.0)。
+完整视频（1080p MP4，每段约 20 秒）见 [Releases → v1.0.0](https://github.com/pengmengying2025/roadmap3d/releases/tag/v1.0.0)。
+
+## 工作原理
+
+层、分组、可选的深度维度、边、*一条会亮起来的高亮路径*、镜头关键帧、中英字幕——全部从 JSON 规格读入。场景用 three.js 搭建，在无头 Chromium（由 Playwright 驱动）里逐帧渲染；ffmpeg 把帧编码成 MP4 和 GIF 预览，封面 PNG 取第一个路径节点点亮的那一帧。没有随机模拟，同一份规格永远出同一段视频。
 
 ## 它做什么
 
@@ -23,7 +43,7 @@ layergraph 把分层的依赖或流程——供应层级、项目阶段、软件
 - **安静的字体。** 全篇衬线（Times New Roman → Source Serif 4 → Georgia；中文后备 Noto Serif SC），字号小、字重 Regular：节点标签 14 px、路径标签 20 px、字幕 22 / 15 px（@1080p）。
 - **一条命令一件事**：`validate`、`test`（先看关键帧）、`render`（视频 + GIF + 封面 + 拼图）、`still`、`cover`、`strip`（路径的 2D 横带，放 deck 和文档）。
 
-## 快速开始
+## 安装与运行（完整）
 
 ```bash
 npm install                      # three + playwright
@@ -31,10 +51,10 @@ npx playwright install chromium  # 无头浏览器（一次）
 scripts/get_fonts.sh             # 下载 Source Serif 4 + Noto Serif SC（OFL）到 fonts/（任何字体目录都行：--font-dir）
 # ffmpeg：放到 PATH，或 export FFMPEG=/path/to/ffmpeg，或 pip install imageio-ffmpeg
 
-node src/cli.mjs validate examples/deps/layergraph.json
-node src/cli.mjs test     examples/deps/layergraph.json -o out/deps --lang zh   # 关键帧，先看
-node src/cli.mjs render   examples/deps/layergraph.json -o out/deps --lang zh   # video.mp4 · preview.gif · cover.png · contact.png · timeline.json
-node src/cli.mjs strip    examples/deps/layergraph.json -o out/deps --lang zh   # strip.png
+node src/cli.mjs validate examples/deps/roadmap3d.json
+node src/cli.mjs test     examples/deps/roadmap3d.json -o out/deps --lang zh   # 关键帧，先看
+node src/cli.mjs render   examples/deps/roadmap3d.json -o out/deps --lang zh   # video.mp4 · preview.gif · cover.png · contact.png · timeline.json
+node src/cli.mjs strip    examples/deps/roadmap3d.json -o out/deps --lang zh   # strip.png
 ```
 
 Node ≥ 18。1080p 软件渲染约 3–5 帧/秒，20 秒的片子要 2–3 分钟。
@@ -60,7 +80,7 @@ Node ≥ 18。1080p 软件渲染约 3–5 帧/秒，20 秒的片子要 2–3 分
 }
 ```
 
-完整字段：[schema/layergraph.schema.json](schema/layergraph.schema.json)（JSON Schema draft-07；规格文件允许注释与尾逗号）。节点三种：**major**（网格上的球）、**minor**（父节点前方半环上的小球——子项、部件）、**leaf**（叶平面上的八面体——测试、证书、文档）。边的方向 `from → to` 表示「`to` 依赖 `from`」（先 → 后，供应方 → 需求方）。
+完整字段：[schema/roadmap3d.schema.json](schema/roadmap3d.schema.json)（JSON Schema draft-07；规格文件允许注释与尾逗号）。节点三种：**major**（网格上的球）、**minor**（父节点前方半环上的小球——子项、部件）、**leaf**（叶平面上的八面体——测试、证书、文档）。边的方向 `from → to` 表示「`to` 依赖 `from`」（先 → 后，供应方 → 需求方）。
 
 ## 命令
 
@@ -98,7 +118,7 @@ Node ≥ 18。1080p 软件渲染约 3–5 帧/秒，20 秒的片子要 2–3 分
 - `examples/critical-path/`：五个项目阶段作层，五个团队作车道，无深度；高亮路径 = 决定上线日期的关键路径；显式镜头关键帧让顶层标题不被裁。`ivory-indigo`。
 - `examples/deps/`：五个架构层作层，四个子系统作车道，变更频率作深度，测试套件作 leaf；高亮路径 = 一个模块自下而上的构建顺序。`ivory-gold`。
 
-三份全部合成，默认以英文渲染；中文字符串作为可选本地化保留在规格里（`--lang zh`）。每个目录有规格与 `render/`（`preview.gif`、`cover.png`、`contact.png`、`timeline.json`）；完整的 `video.mp4` 不入仓，挂在 [Release v1.0.0](https://github.com/pengmengying2025/layergraph/releases/tag/v1.0.0)（本地跑 `render` 照常生成）。
+三份全部合成，默认以英文渲染；中文字符串作为可选本地化保留在规格里（`--lang zh`）。每个目录有规格与 `render/`（`preview.gif`、`cover.png`、`contact.png`、`timeline.json`）；完整的 `video.mp4` 不入仓，挂在 [Release v1.0.0](https://github.com/pengmengying2025/roadmap3d/releases/tag/v1.0.0)（本地跑 `render` 照常生成）。
 
 ## 给 agent
 

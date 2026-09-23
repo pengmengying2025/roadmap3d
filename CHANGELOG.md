@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.0.1 — 2026-09-24
+
+- Renamed from **layergraph** to **roadmap3d** (checked free on GitHub, npm and PyPI): package name, CLI command (`roadmap3d …`), repository, README titles, SKILL name, prompts. Renamed files: `schema/layergraph.schema.json` → `schema/roadmap3d.schema.json`, `examples/*/layergraph.json` → `examples/*/roadmap3d.json`. Environment variables `LAYERGRAPH_SKIP_SMOKE` / `LAYERGRAPH_SCAN_PRIVATE` → `ROADMAP3D_SKIP_SMOKE` / `ROADMAP3D_SCAN_PRIVATE`. The old GitHub URL redirects.
+- Subtitle: "Animated 3D roadmaps from a JSON spec — layers, dependencies, one lit path". README (en / zh) gets badges and a keyword line; `package.json` keywords and the GitHub topics use the same English keywords.
+- `scripts/scan_words.sh` allows the phrases 知识图谱 / knowledge graph / 路线图 / roadmap and the use case 学习 / 技能路线图 / learning/skill roadmap; any other use of those words still fails the scan.
+- README (en / zh): H1 is now "Roadmap 3D Video" with `package: roadmap3d` beneath it; the opening is rewritten as one sentence, what you give it, what you get, four use cases, a three-line quick start and a pointer to SKILL.md / prompts; the technical description moved to a new "How it works" section.
+- No change to the engine, presets, spec format or renders; the example videos on Release v1.0.0 are current.
+
 ## 1.0.0 — 2026-09-24
 
 First stable release. What is fixed from here on (breaking changes will bump the major version):

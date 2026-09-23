@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html><head><meta charset="utf-8"><title>layergraph engine</title>
+<html><head><meta charset="utf-8"><title>roadmap3d engine</title>
 <style>
   :root{--s:1;--font:serif;--em:inherit;--radius:12px}
   html,body{margin:0;overflow:hidden;background:#000}
@@ -23,7 +23,7 @@
 <div id="bg"></div><canvas id="c"></canvas><div id="vig"></div>
 <div id="hud"><div id="brand"></div><div id="legend"></div><div id="cap"><div class="t"></div><div class="s"></div></div><div id="tail"></div></div>
 <script type="module">
-/* layergraph engine — reads window.__LG = {spec, preset, lang, fonts:[{family,weight,file}]} (injected by capture.mjs).
+/* roadmap3d engine — reads window.__LG = {spec, preset, lang, fonts:[{family,weight,file}]} (injected by capture.mjs).
    All content, colours and timing come from the spec + preset; nothing is hard-coded here. */
 import * as THREE from '/vendor/three.module.js';
 const CFG = window.__LG || {}; const SPEC = CFG.spec; const P = CFG.preset;

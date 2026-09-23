@@ -1,6 +1,6 @@
 # Dependency licences
 
-layergraph itself is MIT. Nothing copyleft is imported; the two GPL-family tools are called as external processes only.
+roadmap3d itself is MIT. Nothing copyleft is imported; the two GPL-family tools are called as external processes only.
 
 | dependency | licence | how it is used | verified |
 |---|---|---|---|

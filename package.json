@@ -1,15 +1,15 @@
 {
-  "name": "layergraph",
-  "version": "1.0.0",
-  "description": "Render a layered 3D graph animation (MP4 + GIF preview + cover PNG + 2D strip) from one JSON spec: layers, groups, optional depth, edges, a highlight path, camera keyframes, bilingual captions.",
+  "name": "roadmap3d",
+  "version": "1.0.1",
+  "description": "Animated 3D roadmaps from a JSON spec — layers, dependencies, one lit path. Renders an MP4, a GIF preview, a cover PNG and a 2D strip headlessly (three.js + Chromium + ffmpeg).",
   "type": "module",
   "bin": {
-    "layergraph": "src/cli.mjs"
+    "roadmap3d": "src/cli.mjs"
   },
   "scripts": {
     "test": "node --test test/*.test.mjs",
-    "test:smoke": "node src/cli.mjs test examples/deps/layergraph.json -o out/smoke",
-    "validate:examples": "node src/cli.mjs validate examples/supply-chain/layergraph.json && node src/cli.mjs validate examples/critical-path/layergraph.json && node src/cli.mjs validate examples/deps/layergraph.json",
+    "test:smoke": "node src/cli.mjs test examples/deps/roadmap3d.json -o out/smoke",
+    "validate:examples": "node src/cli.mjs validate examples/supply-chain/roadmap3d.json && node src/cli.mjs validate examples/critical-path/roadmap3d.json && node src/cli.mjs validate examples/deps/roadmap3d.json",
     "test:validate": "node --test test/validate.test.mjs",
     "scan": "scripts/scan_words.sh"
   },
@@ -22,17 +22,19 @@
   },
   "license": "MIT",
   "keywords": [
-    "graph",
-    "animation",
-    "three.js",
-    "layered-graph",
+    "roadmap",
+    "3d",
+    "knowledge-graph",
     "dependency-graph",
-    "supply-chain",
     "critical-path",
-    "video",
-    "mp4",
-    "gif",
-    "headless",
+    "supply-chain",
+    "data-visualization",
+    "graph-visualization",
+    "animation",
+    "threejs",
+    "video-generation",
+    "json",
+    "headless-rendering",
     "agent-skill"
   ]
 }

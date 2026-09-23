@@ -1,9 +1,9 @@
 # Prompt template · change the highlight path, captions or palette of an existing graph
 
 ```
-You are working in the layergraph repo (read SKILL.md first). Modify an existing spec, do not rebuild it.
+You are working in the roadmap3d repo (read SKILL.md first). Modify an existing spec, do not rebuild it.
 
-SPEC: ⟨path/to/layergraph.json⟩
+SPEC: ⟨path/to/roadmap3d.json⟩
 
 CHANGES
 - New highlight path: ⟨X → Y → Z⟩ (keep the second path / remove it / add ⟨…⟩).

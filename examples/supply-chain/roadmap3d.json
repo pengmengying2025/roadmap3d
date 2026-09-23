@@ -1,5 +1,5 @@
 {
-  "$schema": "../../schema/layergraph.schema.json",
+  "$schema": "../../schema/roadmap3d.schema.json",
   // Synthetic supply chain. Layers = supplier tiers (raw materials → parts → assemblies → finished products),
   // groups = supplier regions, depth = risk rating. The highlight path follows one finished product down to its raw material.
   "meta": { "title": { "zh": "供应链溯源图（示例）", "en": "Supply-Chain Provenance (sample)" }, "subtitle": { "zh": "原材料 → 零部件 → 组件 → 成品 · 按供应商区域分道 · 风险等级向内", "en": "raw materials → parts → assemblies → products · lanes by supplier region · risk inward" }, "preset": "ivory-gold", "duration": 21, "lang": "en" },

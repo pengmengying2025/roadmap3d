@@ -1,5 +1,5 @@
 {
-  "$schema": "../../schema/layergraph.schema.json",
+  "$schema": "../../schema/roadmap3d.schema.json",
   // A synthetic software dependency graph. Layers = architecture tiers (bottom = utilities), groups = subsystems,
   // depth = how often a module changes, leaf nodes = test suites. The highlight path is the build order of one module, bottom-up.
   "meta": { "title": { "zh": "模块依赖图（示例）", "en": "Module Dependency Graph (sample)" }, "subtitle": { "zh": "基础库 → 核心 → 服务 → 接口 → 应用 · 一个模块的构建顺序", "en": "utilities → core → services → API → apps · build order of one module" }, "preset": "ivory-gold", "duration": 19, "lang": "en" },

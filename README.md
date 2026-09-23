@@ -1,8 +1,24 @@
-# layergraph
+# Roadmap 3D Video
 
-**One JSON spec → one layered 3D graph animation (MP4 + GIF preview + cover PNG + 2D strip).**
-layergraph turns a tiered dependency or flow — suppliers, project phases, software modules — into a short, quiet clip in which one path lights up, ready for a slide, a report or a README.
-Layers, groups, an optional depth dimension, edges, *one highlight path that lights up*, camera keyframes, bilingual captions. Rendered headlessly with three.js in Chromium, frame by frame, encoded with ffmpeg. Built for people and for coding agents (see [SKILL.md](SKILL.md) and [prompts/](prompts/)).
+<sub>package: <code>roadmap3d</code></sub>
+
+[![version 1.0.1](https://img.shields.io/badge/version-1.0.1-2B2B2B)](CHANGELOG.md) [![license MIT](https://img.shields.io/badge/license-MIT-C99A2E)](LICENSE) [![node ≥ 18](https://img.shields.io/badge/node-%E2%89%A5%2018-8C9A92)](package.json) [![three.js 0.186](https://img.shields.io/badge/three.js-0.186-8C9A92)](docs/licenses.md)
+
+**Turn a roadmap — layers plus dependencies — into a 20–30 s 3D explainer video in which one path lights up.**
+
+- **You give it** one JSON file: layers, groups, edges, the path to highlight, captions.
+- **You get** an MP4, a GIF preview, a cover PNG and a 2D strip.
+- **Use it for** a learning/skill roadmap, supply-chain traceability, a project's critical path, software module dependencies.
+
+```bash
+npm install && npx playwright install chromium && scripts/get_fonts.sh    # once
+node src/cli.mjs test   examples/supply-chain/roadmap3d.json -o out/demo    # key frames to look at first
+node src/cli.mjs render examples/supply-chain/roadmap3d.json -o out/demo    # needs ffmpeg (PATH, $FFMPEG or pip install imageio-ffmpeg)
+```
+
+Built for people and coding agents — see [SKILL.md](SKILL.md) / [prompts/](prompts/).
+
+**Keywords:** roadmap · 3D · knowledge graph · dependency graph · critical path · supply chain · data visualization · graph visualization · animation · three.js · video generation · JSON · headless rendering · agent skill
 
 [中文说明 →](README.zh-CN.md) · **Showcase:** *(reserved — see [Showcase](#showcase))*
 
@@ -11,7 +27,11 @@ Layers, groups, an optional depth dimension, edges, *one highlight path that lig
 | ![](examples/supply-chain/render/preview.gif) | ![](examples/critical-path/render/preview.gif) | ![](examples/deps/render/preview.gif) |
 | ![](examples/supply-chain/render/contact.png) | ![](examples/critical-path/render/contact.png) | ![](examples/deps/render/contact.png) |
 
-Full-length videos (1080p MP4, about 20 s each): see [Releases → v1.0.0](https://github.com/pengmengying2025/layergraph/releases/tag/v1.0.0).
+Full-length videos (1080p MP4, about 20 s each): see [Releases → v1.0.0](https://github.com/pengmengying2025/roadmap3d/releases/tag/v1.0.0).
+
+## How it works
+
+Layers, groups, an optional depth dimension, edges, *one highlight path that lights up*, camera keyframes, bilingual captions — all read from the JSON spec. The scene is built with three.js and rendered headlessly in Chromium (driven by Playwright), frame by frame; ffmpeg encodes the frames into the MP4 and the GIF preview, and the cover PNG is the frame where the first path node lights up. Nothing is simulated, so the same spec always gives the same video.
 
 ## What it does
 
@@ -23,7 +43,7 @@ Full-length videos (1080p MP4, about 20 s each): see [Releases → v1.0.0](https
 - **Quiet typography.** Serif throughout (Times New Roman → Source Serif 4 → Georgia; Noto Serif SC for CJK), small and regular-weight: node labels 14 px, path labels 20 px, captions 22 / 15 px at 1080p.
 - **One command each**: `validate`, `test` (key frames to look at), `render` (video + GIF + cover + contact sheet), `still`, `cover`, `strip` (2D band of the path for slides and documents).
 
-## Quick start
+## Install and run (full)
 
 ```bash
 npm install                      # three + playwright
@@ -31,10 +51,10 @@ npx playwright install chromium  # headless browser (once)
 scripts/get_fonts.sh             # Source Serif 4 + Noto Serif SC (OFL) → fonts/  (any font dir works: --font-dir)
 # ffmpeg: put it on PATH, or export FFMPEG=/path/to/ffmpeg, or `pip install imageio-ffmpeg`
 
-node src/cli.mjs validate examples/deps/layergraph.json
-node src/cli.mjs test     examples/deps/layergraph.json -o out/deps     # key frames → look at them first
-node src/cli.mjs render   examples/deps/layergraph.json -o out/deps     # video.mp4 · preview.gif · cover.png · contact.png · timeline.json
-node src/cli.mjs strip    examples/deps/layergraph.json -o out/deps     # strip.png
+node src/cli.mjs validate examples/deps/roadmap3d.json
+node src/cli.mjs test     examples/deps/roadmap3d.json -o out/deps     # key frames → look at them first
+node src/cli.mjs render   examples/deps/roadmap3d.json -o out/deps     # video.mp4 · preview.gif · cover.png · contact.png · timeline.json
+node src/cli.mjs strip    examples/deps/roadmap3d.json -o out/deps     # strip.png
 ```
 
 Node ≥ 18. Rendering runs at about 3–5 frames/s at 1080p on a laptop (software GL); a 20 s clip takes 2–3 minutes.
@@ -60,7 +80,7 @@ Node ≥ 18. Rendering runs at about 3–5 frames/s at 1080p on a laptop (softwa
 }
 ```
 
-Full field reference: [schema/layergraph.schema.json](schema/layergraph.schema.json) (JSON Schema draft-07; comments and trailing commas are tolerated in spec files). Node kinds: **major** (sphere on the grid), **minor** (small sphere in a half-ring in front of its parent — sub-items, components), **leaf** (octahedron on the leaf plane — tests, certificates, documents). Edge direction is `from → to` = "`to` depends on `from`" (earlier → later, supplier → customer).
+Full field reference: [schema/roadmap3d.schema.json](schema/roadmap3d.schema.json) (JSON Schema draft-07; comments and trailing commas are tolerated in spec files). Node kinds: **major** (sphere on the grid), **minor** (small sphere in a half-ring in front of its parent — sub-items, components), **leaf** (octahedron on the leaf plane — tests, certificates, documents). Edge direction is `from → to` = "`to` depends on `from`" (earlier → later, supplier → customer).
 
 ## Commands
 
@@ -98,7 +118,7 @@ One serif stack for everything: `"Times New Roman", "Source Serif 4", Georgia, s
 - `examples/critical-path/` — five project phases as layers, five teams as lanes, no depth; the highlight path is the critical path that sets the launch date; explicit camera keyframes keep the top layer titles in frame. `ivory-indigo`.
 - `examples/deps/` — five architecture tiers as layers, four subsystems as lanes, change rate as depth, test suites as leaf nodes; the highlight path is the build order of one module, bottom-up. `ivory-gold`.
 
-All three are synthetic and render in English by default; Chinese strings are kept in the specs as an optional localisation (`--lang zh`). Each folder has the spec and a `render/` directory with `preview.gif`, `cover.png`, `contact.png` and `timeline.json`; the full-length `video.mp4` files are attached to [Release v1.0.0](https://github.com/pengmengying2025/layergraph/releases/tag/v1.0.0) rather than committed (`render` writes them locally as usual).
+All three are synthetic and render in English by default; Chinese strings are kept in the specs as an optional localisation (`--lang zh`). Each folder has the spec and a `render/` directory with `preview.gif`, `cover.png`, `contact.png` and `timeline.json`; the full-length `video.mp4` files are attached to [Release v1.0.0](https://github.com/pengmengying2025/roadmap3d/releases/tag/v1.0.0) rather than committed (`render` writes them locally as usual).
 
 ## For agents
 
