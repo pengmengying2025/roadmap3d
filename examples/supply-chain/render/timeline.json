@@ -1,0 +1,169 @@
+{
+ "cover_t": 4.95,
+ "bounds": {
+  "xmin": -17.70909411139758,
+  "xmax": 17.000000000000004,
+  "ymin": 0,
+  "ymax": 9.600000000000001,
+  "zmin": -9.81,
+  "zmax": 0
+ },
+ "R0": 69.41818822279517,
+ "center": [
+  -0.35454705569878797,
+  4.800000000000001,
+  -4.905
+ ],
+ "lanes": {
+  "north": [
+   -17,
+   -9.1
+  ],
+  "east": [
+   -8.299999999999999,
+   -0.3999999999999986
+  ],
+  "south": [
+   0.40000000000000213,
+   8.300000000000002
+  ],
+  "overseas": [
+   9.100000000000003,
+   17.000000000000004
+  ]
+ },
+ "camera": [
+  {
+   "t": 0,
+   "az": 0.32,
+   "el": 0.3,
+   "r": 69.42,
+   "target": "center"
+  },
+  {
+   "t": 3.5999999999999996,
+   "az": 0.58,
+   "el": 0.32,
+   "r": 66.64,
+   "target": "center"
+  },
+  {
+   "t": 5,
+   "az": 2.5,
+   "el": 0.26,
+   "r": 24.3,
+   "target": "node:f-robot"
+  },
+  {
+   "t": 5.9,
+   "az": 2.46,
+   "el": 0.28,
+   "r": 23.6,
+   "target": "mid:f-robot,a-motor"
+  },
+  {
+   "t": 6.2,
+   "az": 2.42,
+   "el": 0.3,
+   "r": 27.07,
+   "target": "node:a-motor"
+  },
+  {
+   "t": 7.300000000000001,
+   "az": 2.42,
+   "el": 0.28,
+   "r": 23.6,
+   "target": "mid:a-motor,p-magnet"
+  },
+  {
+   "t": 7.6000000000000005,
+   "az": 2.38,
+   "el": 0.3,
+   "r": 27.07,
+   "target": "node:p-magnet"
+  },
+  {
+   "t": 8.700000000000001,
+   "az": 2.38,
+   "el": 0.28,
+   "r": 23.6,
+   "target": "mid:p-magnet,r-rare"
+  },
+  {
+   "t": 9,
+   "az": 2.34,
+   "el": 0.3,
+   "r": 27.07,
+   "target": "node:r-rare"
+  },
+  {
+   "t": 10.8,
+   "az": 2.42,
+   "el": 0.34,
+   "r": 36.1,
+   "target": "mid:f-robot,r-rare"
+  },
+  {
+   "t": 13.9,
+   "az": 0.52,
+   "el": 0.3,
+   "r": 66.64,
+   "target": "center"
+  },
+  {
+   "t": 14.7,
+   "az": 0.5,
+   "el": 0.26,
+   "r": 60.39,
+   "target": "second"
+  },
+  {
+   "t": 19.6,
+   "az": 0.68,
+   "el": 0.25,
+   "r": 55.53,
+   "target": "second"
+  },
+  {
+   "t": 21,
+   "az": 0.72,
+   "el": 0.25,
+   "r": 55.53,
+   "target": "second"
+  }
+ ],
+ "lit": {
+  "path": [
+   4.6,
+   6,
+   7.4,
+   8.8
+  ],
+  "release": 13.5,
+  "second": [
+   14.6,
+   15.6,
+   16.6,
+   17.6
+  ],
+  "second_release": null
+ },
+ "nodes": 34,
+ "lang": "en",
+ "preset": "ivory-gold",
+ "fonts": [
+  "Noto Sans SC",
+  "Noto Serif SC",
+  "Source Serif 4"
+ ],
+ "font_stack": "\"Times New Roman\",\"Source Serif 4\",Georgia,\"Noto Serif SC\",\"Songti SC\",\"Noto Serif CJK SC\",serif",
+ "text_px": {
+  "layer": 18,
+  "axis": 12,
+  "node": 14,
+  "detail": 14,
+  "lit": 20,
+  "lit_cover": 30
+ },
+ "fontsOk": true
+}

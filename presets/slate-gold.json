@@ -1,0 +1,26 @@
+{
+  "name": "slate-gold",
+  "bg": { "center": "#2B3345", "edge": "#1F2532", "vignette": 0.28 },
+  "fog": { "color": "#1F2532", "near": 0.55, "far": 1.65 },
+  "floor": { "color": "#9AA4B8", "opacity": 0.035, "opacity_far": 0.0, "edge": "#9AA4B8", "edge_opacity": 0.12 },
+  "node": {
+    "tints": ["#9AA4B8", "#A2ACC0", "#929CB0", "#A9B2C5", "#8C96AA", "#9EA8BC"],
+    "minor_tints": ["#6A7488", "#717B8F", "#636D81", "#778195", "#5E687C", "#6D7789"],
+    "leaf_live": "#C3CAD8", "leaf_dim": "#59627A", "leaf_live_scale": 1.3, "leaf_scale": 0.72, "opacity": 0.95
+  },
+  "edge": { "dep": "#4A5468", "dep_opacity": 0.35, "link": "#4A5468", "link_opacity": 0.28, "member": "#4A5468", "member_opacity": 0.32, "leaf": "#4A5468", "leaf_opacity": 0.26 },
+  "lit": { "node": "#E8B84A", "glow": "#E8B84A", "tube": "#E8B84A", "tube_radius": 0.056, "halo_blend": "additive", "halo_opacity": 0.5, "halo_scale": [1.1, 0.6, 0.25], "grow": [0.6, 0.15], "spark": true, "spark_scale": 0.9, "spark_opacity": 0.85, "ring": "#E8B84A", "ring_scale": 1.3, "ring_opacity": 0.9, "ring_width": 5 },
+  "label": {
+    "layer": "#F3EFE6", "axis": "#9AA4B8", "far": "#D6DAE3",
+    "detail_fg": "#F3EFE6", "detail_bg": "rgba(26,32,48,0.70)", "detail_border": "rgba(243,239,230,0.12)",
+    "lit_fg": "#F3EFE6", "lit_bg": "rgba(26,32,48,0.70)", "lit_border": "rgba(232,184,74,0.70)",
+    "radius": 5, "shadow": 0.25
+  },
+  "hud": {
+    "brand_fg": "#F3EFE6", "brand_sub": "#9AA4B8", "legend_fg": "#D6DAE3",
+    "caption_fg": "#F3EFE6", "caption_em": "#E8B84A", "caption_bg": "rgba(26,32,48,0.70)", "caption_border": "rgba(243,239,230,0.10)", "caption_shadow": "0 8px 22px rgba(0,0,0,0.28)",
+    "tail_fg": "#F3EFE6", "tail_bg": "rgba(26,32,48,0.70)", "tail_border": "rgba(232,184,74,0.35)", "radius": 8
+  },
+  "light": { "hemi": 1.1, "ground": "#2B3345", "dir": 0.5 },
+  "cover": { "dim_mesh": 0.28, "dim_line": 0.35 }
+}

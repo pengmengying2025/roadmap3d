@@ -1,0 +1,62 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://example.invalid/layergraph.schema.json",
+  "title": "layergraph spec",
+  "description": "One JSON file → one layered 3D graph animation. Text fields accept a plain string or {\"zh\": \"…\", \"en\": \"…\"}; the CLI --lang (or meta.lang) picks one and falls back to the other. Comments (// and /* */) and trailing commas are tolerated by the CLI.",
+  "type": "object",
+  "required": ["layers", "nodes"],
+  "definitions": {
+    "text": { "oneOf": [ { "type": "string" }, { "type": "object", "additionalProperties": { "type": "string" }, "minProperties": 1 } ] },
+    "color": { "type": "string", "pattern": "^#[0-9A-Fa-f]{6}$" },
+    "target": { "description": "center | path | second | node:ID | mid:ID1,ID2 | [x,y,z]", "oneOf": [ { "type": "string" }, { "type": "array", "items": { "type": "number" }, "minItems": 3, "maxItems": 3 } ] }
+  },
+  "properties": {
+    "$schema": { "type": "string" },
+    "meta": {
+      "type": "object",
+      "properties": {
+        "title": { "$ref": "#/definitions/text", "description": "Top-left brand line (omit or overlays.brand=false to hide)" },
+        "subtitle": { "$ref": "#/definitions/text" },
+        "preset": { "description": "ivory-gold (default) | ivory-indigo | slate-gold | midnight | obsidian-gold | path to a preset JSON | inline preset object (may carry \"base\": \"ivory-gold\")", "oneOf": [ { "type": "string" }, { "type": "object" } ] },
+        "size": { "type": "array", "items": { "type": "integer", "minimum": 16 }, "minItems": 2, "maxItems": 2, "default": [1920, 1080] },
+        "fps": { "type": "number", "default": 30 },
+        "duration": { "type": "number", "description": "seconds", "default": 21 },
+        "lang": { "type": "string", "description": "default language key (zh, en, …)", "default": "en" },
+        "fonts": { "type": "object", "description": "Type: one serif stack for everything. family = Latin faces in order (default \"Times New Roman\", \"Source Serif 4\", Georgia), cjk = CJK fallback family, scale = one multiplier on all text sizes, sizes = per-role px at 1080p", "properties": { "family": { "oneOf": [ { "type": "string" }, { "type": "array", "items": { "type": "string" } } ], "default": "\"Times New Roman\",\"Source Serif 4\",Georgia" }, "cjk": { "type": "string", "default": "Noto Serif SC" }, "scale": { "type": "number", "default": 1 }, "sizes": { "type": "object", "properties": { "layer": { "type": "number", "default": 18 }, "axis": { "type": "number", "default": 12 }, "node": { "type": "number", "default": 14 }, "detail": { "type": "number", "default": 14 }, "lit": { "type": "number", "default": 20 }, "lit_cover": { "type": "number", "default": 30 } } }, "files": { "type": "object", "description": "filename → {family, weight}; overrides the filename heuristic", "additionalProperties": { "type": "object", "properties": { "family": { "type": "string" }, "weight": { "type": "string" } } } } } },
+        "lod": { "type": "object", "properties": { "far_per_layer": { "type": "integer", "default": 7, "description": "how many major-node labels per layer show in the wide shot" } } }
+      }
+    },
+    "axes": {
+      "type": "object",
+      "properties": {
+        "layer": { "type": "object", "description": "vertical axis (y): tiers, stages, levels — any ordered set of layers", "properties": { "label": { "$ref": "#/definitions/text" }, "gap": { "type": "number", "default": 3.2 }, "sublayer_gap": { "type": "number", "default": 1.3 }, "show_floors": { "type": "boolean", "default": true } } },
+        "group": { "type": "object", "description": "horizontal axis (x): categories become lanes", "properties": { "label": { "$ref": "#/definitions/text" }, "width": { "type": "number", "description": "total lane width in world units (auto if omitted)" }, "lane_gap": { "type": "number", "default": 0.8 }, "center": { "type": "number", "default": 0 } } },
+        "depth": { "description": "optional depth axis (z). null/omitted → flat", "oneOf": [ { "type": "null" }, { "type": "object", "properties": { "label": { "$ref": "#/definitions/text" }, "levels": { "type": "array", "items": { "type": "object", "required": ["id"], "properties": { "id": {}, "label": { "$ref": "#/definitions/text" } } } }, "gap": { "type": "number", "default": -3.0, "description": "z per level (negative = away from camera)" }, "leaf_z": { "type": "number", "description": "z of leaf nodes (default gap*3.27)" }, "leaf_label": { "$ref": "#/definitions/text", "description": "axis label for the leaf plane" } } } ] }
+      }
+    },
+    "layers": { "type": "array", "minItems": 1, "items": { "type": "object", "required": ["id"], "properties": { "id": { "type": "string" }, "label": { "$ref": "#/definitions/text" }, "sublayers": { "description": "count or names of sub-rows inside the layer (e.g. semesters)", "oneOf": [ { "type": "integer", "minimum": 1 }, { "type": "array", "items": { "$ref": "#/definitions/text" } } ] } } }, "description": "bottom → top order" },
+    "groups": { "type": "array", "items": { "type": "object", "required": ["id"], "properties": { "id": { "type": "string" }, "label": { "$ref": "#/definitions/text" }, "color": { "$ref": "#/definitions/color", "description": "node tint for this group (else preset tints by index)" }, "lane": { "type": "array", "items": { "type": "number" }, "minItems": 2, "maxItems": 2, "description": "[x0, x1] override; auto by node count if omitted" } } } },
+    "nodes": { "type": "array", "minItems": 1, "items": { "type": "object", "required": ["id", "label", "layer"], "properties": {
+      "id": { "type": "string" }, "label": { "$ref": "#/definitions/text" }, "short": { "$ref": "#/definitions/text", "description": "label used in the wide shot" },
+      "layer": { "type": "string" }, "sublayer": { "type": "integer", "minimum": 0, "default": 0 }, "group": { "type": "string" },
+      "depth": { "type": "integer", "minimum": 1, "default": 1 },
+      "kind": { "type": "string", "enum": ["major", "minor", "leaf"], "default": "major", "description": "major = sphere on the grid; minor = small sphere in a half-ring in front of its parent (sub-items, components); leaf = octahedron on the leaf plane (attachments: tests, certificates, documents)" },
+      "parent": { "type": "string", "description": "required for minor; optional for leaf" },
+      "order": { "type": "number", "description": "left→right order inside a lane cell" },
+      "state": { "type": "string", "enum": ["live", "dim"], "description": "leaf only: live = bright + labelled near the camera" },
+      "color": { "$ref": "#/definitions/color" } } } },
+    "edges": { "type": "array", "items": { "type": "object", "required": ["from", "to"], "properties": { "from": { "type": "string" }, "to": { "type": "string" }, "kind": { "type": "string", "enum": ["dep", "link", "member", "leaf"], "default": "dep", "description": "dep = dependency (from → to means \"to depends on from\"); link = secondary relation; member/leaf are the automatic parent spokes" } } }, "description": "minor→parent and leaf→parent spokes are drawn automatically" },
+    "highlight": { "type": "object", "description": "the path that lights up", "properties": {
+      "path": { "type": "array", "items": { "type": "string" }, "description": "node ids in lighting order" },
+      "labels": { "type": "object", "additionalProperties": { "$ref": "#/definitions/text" }, "description": "per-node label shown when lit (default: node label)" },
+      "lit_at": { "type": "array", "items": { "type": "number" }, "description": "seconds; default 0.24T + 0.085T·i" },
+      "release_at": { "type": "number", "description": "seconds when the path fades (default 0.63T)" },
+      "second": { "type": "object", "description": "optional second path (e.g. the full chain in the tail), same fields; default lit 0.686T + 0.043T·i, no release", "properties": { "path": { "type": "array", "items": { "type": "string" } }, "labels": { "type": "object" }, "lit_at": { "type": "array", "items": { "type": "number" } }, "release_at": { "type": "number" } } } } },
+    "camera": { "description": "\"auto\" (default) or keyframes; missing az/el/r/target inherit the previous keyframe; r may be a number or a string fraction of the auto overview radius (\"0.35\")", "oneOf": [ { "type": "string", "enum": ["auto"] }, { "type": "array", "minItems": 1, "items": { "type": "object", "required": ["t"], "properties": { "t": { "type": "number" }, "az": { "type": "number", "description": "azimuth, radians" }, "el": { "type": "number", "description": "elevation, radians" }, "r": { "oneOf": [ { "type": "number" }, { "type": "string" } ] }, "target": { "$ref": "#/definitions/target" } } } } ] },
+    "captions": { "type": "array", "items": { "type": "object", "required": ["a", "b", "main"], "properties": { "a": { "type": "number" }, "b": { "type": "number" }, "main": { "$ref": "#/definitions/text", "description": "*text* marks an accent" }, "sub": { "$ref": "#/definitions/text" } } } },
+    "overlays": { "type": "object", "properties": {
+      "brand": { "type": "boolean", "default": true },
+      "legend": { "oneOf": [ { "type": "boolean" }, { "type": "object", "properties": { "kinds": { "type": "object", "properties": { "minor": { "$ref": "#/definitions/text" }, "leaf": { "$ref": "#/definitions/text" } } } } } ], "default": true },
+      "tail": { "type": "object", "required": ["a", "text"], "properties": { "a": { "type": "number" }, "b": { "type": "number" }, "text": { "$ref": "#/definitions/text" } }, "description": "small line bottom-left from a (to b)" } } }
+  }
+}

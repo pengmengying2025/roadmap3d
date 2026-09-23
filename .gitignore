@@ -1,0 +1,12 @@
+node_modules/
+out/
+render/frames/
+# fonts are downloaded by scripts/get_fonts.sh, never committed (the README explaining them is)
+fonts/*
+!fonts/README.md
+# full-length example videos are published as GitHub Release assets, not committed
+examples/*/render/*.mp4
+# local-only private word list for scripts/scan_words.sh
+scripts/*.local
+*.log
+.DS_Store

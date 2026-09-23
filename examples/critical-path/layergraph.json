@@ -1,0 +1,71 @@
+{
+  "$schema": "../../schema/layergraph.schema.json",
+  // Synthetic project plan. Layers = phases (bottom = earliest), groups = teams, no depth axis.
+  // Edges point from a task to the tasks that wait for it; the highlight path is the critical path.
+  "meta": { "title": { "zh": "项目关键路径（示例）", "en": "Project Critical Path (sample)" }, "subtitle": { "zh": "五个阶段 · 按团队分道 · 一条关键路径决定上线日", "en": "five phases · lanes by team · one critical path sets the launch date" }, "preset": "ivory-indigo", "duration": 19, "lang": "en" },
+  "axes": { "layer": { "label": { "zh": "阶段 ↑", "en": "Phase ↑" }, "gap": 3.0 }, "group": { "label": { "zh": "← 团队 →", "en": "← team →" } } },
+  "layers": [
+    { "id": "req", "label": { "zh": "需求", "en": "Requirements" } },
+    { "id": "design", "label": { "zh": "设计", "en": "Design" } },
+    { "id": "dev", "label": { "zh": "开发", "en": "Development" } },
+    { "id": "test", "label": { "zh": "测试", "en": "Testing" } },
+    { "id": "release", "label": { "zh": "发布", "en": "Release" } } ],
+  "groups": [
+    { "id": "product", "label": { "zh": "产品", "en": "Product" } },
+    { "id": "frontend", "label": { "zh": "前端", "en": "Frontend" } },
+    { "id": "backend", "label": { "zh": "后端", "en": "Backend" } },
+    { "id": "qa", "label": { "zh": "质量", "en": "QA" } },
+    { "id": "ops", "label": { "zh": "运维", "en": "Ops" } } ],
+  "nodes": [
+    { "id": "t-interviews", "label": { "zh": "用户访谈", "en": "User interviews" }, "layer": "req", "group": "product", "order": 0 },
+    { "id": "t-prd", "label": { "zh": "需求文档", "en": "PRD" }, "layer": "req", "group": "product", "order": 1 },
+    { "id": "t-api", "label": { "zh": "接口约定", "en": "API contract" }, "layer": "req", "group": "backend" },
+    { "id": "t-wire", "label": { "zh": "线框图", "en": "Wireframes" }, "layer": "design", "group": "product" },
+    { "id": "t-ui", "label": { "zh": "视觉设计", "en": "Visual design" }, "layer": "design", "group": "frontend" },
+    { "id": "t-schema", "label": { "zh": "数据模型", "en": "Data model" }, "layer": "design", "group": "backend" },
+    { "id": "t-plan", "label": { "zh": "部署方案", "en": "Deployment plan" }, "layer": "design", "group": "ops" },
+    { "id": "t-fe", "label": { "zh": "前端实现", "en": "Frontend build" }, "layer": "dev", "group": "frontend" },
+    { "id": "t-be", "label": { "zh": "后端实现", "en": "Backend build" }, "layer": "dev", "group": "backend", "order": 0 },
+    { "id": "t-migration", "label": { "zh": "数据迁移", "en": "Data migration" }, "layer": "dev", "group": "backend", "order": 1 },
+    { "id": "t-ci", "label": { "zh": "流水线", "en": "CI pipeline" }, "layer": "dev", "group": "ops" },
+    { "id": "t-unit", "label": { "zh": "单元测试", "en": "Unit tests" }, "layer": "test", "group": "qa", "order": 0 },
+    { "id": "t-e2e", "label": { "zh": "端到端测试", "en": "End-to-end tests" }, "layer": "test", "group": "qa", "order": 1 },
+    { "id": "t-perf", "label": { "zh": "性能测试", "en": "Load tests" }, "layer": "test", "group": "qa", "order": 2 },
+    { "id": "t-uat", "label": { "zh": "验收", "en": "Acceptance" }, "layer": "test", "group": "product" },
+    { "id": "t-notes", "label": { "zh": "发布说明", "en": "Release notes" }, "layer": "release", "group": "product" },
+    { "id": "t-staging", "label": { "zh": "预发布", "en": "Staging" }, "layer": "release", "group": "ops", "order": 0 },
+    { "id": "t-launch", "label": { "zh": "上线", "en": "Launch" }, "layer": "release", "group": "ops", "order": 1 } ],
+  "edges": [
+    { "from": "t-interviews", "to": "t-prd" }, { "from": "t-prd", "to": "t-wire" }, { "from": "t-prd", "to": "t-api" }, { "from": "t-api", "to": "t-schema" }, { "from": "t-wire", "to": "t-ui" },
+    { "from": "t-ui", "to": "t-fe" }, { "from": "t-api", "to": "t-fe" }, { "from": "t-schema", "to": "t-be" }, { "from": "t-schema", "to": "t-migration" }, { "from": "t-plan", "to": "t-ci" },
+    { "from": "t-be", "to": "t-unit" }, { "from": "t-fe", "to": "t-unit" }, { "from": "t-fe", "to": "t-e2e" }, { "from": "t-be", "to": "t-e2e" }, { "from": "t-migration", "to": "t-e2e" }, { "from": "t-be", "to": "t-perf" }, { "from": "t-e2e", "to": "t-uat" },
+    { "from": "t-ci", "to": "t-staging" }, { "from": "t-e2e", "to": "t-staging" }, { "from": "t-perf", "to": "t-staging" }, { "from": "t-uat", "to": "t-launch" }, { "from": "t-staging", "to": "t-launch" }, { "from": "t-prd", "to": "t-notes", "kind": "link" }, { "from": "t-notes", "to": "t-launch", "kind": "link" } ],
+  "highlight": { "path": ["t-prd", "t-api", "t-schema", "t-be", "t-e2e", "t-launch"], "lit_at": [4.4, 5.6, 6.8, 8.0, 9.2, 10.4], "release_at": 15.0 },
+  // camera: the auto sequence, but the push-in stays at 0.5 R0 and first aims at the middle of the whole path so every layer title is in frame when the first node lights
+  "camera": [
+    { "t": 0,    "az": 0.32, "el": 0.30, "r": "1.0",  "target": "center" },
+    { "t": 3.4,  "az": 0.58, "el": 0.32, "r": "0.96", "target": "center" },
+    { "t": 4.8,  "az": 2.50, "el": 0.30, "r": "0.50", "target": "mid:t-prd,t-launch" },
+    { "t": 5.5,  "az": 2.46, "el": 0.30, "r": "0.48", "target": "mid:t-prd,t-api" },
+    { "t": 5.8,  "az": 2.42, "el": 0.30, "r": "0.52", "target": "node:t-api" },
+    { "t": 6.7,  "az": 2.42, "el": 0.29, "r": "0.48", "target": "mid:t-api,t-schema" },
+    { "t": 7.0,  "az": 2.38, "el": 0.30, "r": "0.52", "target": "node:t-schema" },
+    { "t": 7.9,  "az": 2.38, "el": 0.29, "r": "0.48", "target": "mid:t-schema,t-be" },
+    { "t": 8.2,  "az": 2.34, "el": 0.30, "r": "0.52", "target": "node:t-be" },
+    { "t": 9.1,  "az": 2.34, "el": 0.29, "r": "0.48", "target": "mid:t-be,t-e2e" },
+    { "t": 9.4,  "az": 2.30, "el": 0.30, "r": "0.52", "target": "node:t-e2e" },
+    { "t": 10.3, "az": 2.30, "el": 0.29, "r": "0.48", "target": "mid:t-e2e,t-launch" },
+    { "t": 10.6, "az": 2.26, "el": 0.30, "r": "0.52", "target": "node:t-launch" },
+    { "t": 12.4, "az": 2.42, "el": 0.34, "r": "0.60", "target": "mid:t-prd,t-launch" },
+    { "t": 15.4, "az": 0.52, "el": 0.30, "r": "0.96", "target": "center" },
+    { "t": 19,   "az": 0.60, "el": 0.30, "r": "0.96", "target": "center" }
+  ],
+  "captions": [
+    { "a": 3.6, "b": 5.4, "main": { "zh": "关键路径：从*需求文档*开始", "en": "The critical path starts at the *PRD*" }, "sub": { "zh": "每一步都卡着下一步", "en": "Each task blocks the next" } },
+    { "a": 5.7, "b": 6.7, "main": { "zh": "接口约定要先定下来", "en": "The API contract must be fixed first" } },
+    { "a": 6.9, "b": 7.9, "main": { "zh": "数据模型跟着接口走", "en": "The data model follows the contract" } },
+    { "a": 8.1, "b": 9.1, "main": { "zh": "后端实现是最长的一段", "en": "The backend build is the longest task" } },
+    { "a": 9.3, "b": 10.3, "main": { "zh": "端到端测试等所有实现", "en": "End-to-end tests wait for every build" } },
+    { "a": 10.5, "b": 14.6, "main": { "zh": "*上线*日期由这条路径决定", "en": "The *launch* date is set by this path" }, "sub": { "zh": "缩短它，工期才会缩短", "en": "Shorten it, or nothing moves" } } ],
+  "overlays": { "brand": true, "legend": true }
+}

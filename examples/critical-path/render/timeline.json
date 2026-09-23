@@ -1,0 +1,184 @@
+{
+ "cover_t": 4.75,
+ "bounds": {
+  "xmin": -21.25,
+  "xmax": 21.25,
+  "ymin": 0,
+  "ymax": 12,
+  "zmin": 0,
+  "zmax": 0
+ },
+ "R0": 85,
+ "center": [
+  0,
+  6,
+  0
+ ],
+ "lanes": {
+  "product": [
+   -21.25,
+   -13.39
+  ],
+  "frontend": [
+   -12.59,
+   -8.66
+  ],
+  "backend": [
+   -7.86,
+   -8.881784197001252e-16
+  ],
+  "qa": [
+   0.7999999999999998,
+   12.59
+  ],
+  "ops": [
+   13.39,
+   21.25
+  ]
+ },
+ "camera": [
+  {
+   "t": 0,
+   "az": 0.32,
+   "el": 0.3,
+   "r": 85,
+   "target": "center"
+  },
+  {
+   "t": 3.4,
+   "az": 0.58,
+   "el": 0.32,
+   "r": 81.6,
+   "target": "center"
+  },
+  {
+   "t": 4.8,
+   "az": 2.5,
+   "el": 0.3,
+   "r": 42.5,
+   "target": "mid:t-prd,t-launch"
+  },
+  {
+   "t": 5.5,
+   "az": 2.46,
+   "el": 0.3,
+   "r": 40.8,
+   "target": "mid:t-prd,t-api"
+  },
+  {
+   "t": 5.8,
+   "az": 2.42,
+   "el": 0.3,
+   "r": 44.2,
+   "target": "node:t-api"
+  },
+  {
+   "t": 6.7,
+   "az": 2.42,
+   "el": 0.29,
+   "r": 40.8,
+   "target": "mid:t-api,t-schema"
+  },
+  {
+   "t": 7,
+   "az": 2.38,
+   "el": 0.3,
+   "r": 44.2,
+   "target": "node:t-schema"
+  },
+  {
+   "t": 7.9,
+   "az": 2.38,
+   "el": 0.29,
+   "r": 40.8,
+   "target": "mid:t-schema,t-be"
+  },
+  {
+   "t": 8.2,
+   "az": 2.34,
+   "el": 0.3,
+   "r": 44.2,
+   "target": "node:t-be"
+  },
+  {
+   "t": 9.1,
+   "az": 2.34,
+   "el": 0.29,
+   "r": 40.8,
+   "target": "mid:t-be,t-e2e"
+  },
+  {
+   "t": 9.4,
+   "az": 2.3,
+   "el": 0.3,
+   "r": 44.2,
+   "target": "node:t-e2e"
+  },
+  {
+   "t": 10.3,
+   "az": 2.3,
+   "el": 0.29,
+   "r": 40.8,
+   "target": "mid:t-e2e,t-launch"
+  },
+  {
+   "t": 10.6,
+   "az": 2.26,
+   "el": 0.3,
+   "r": 44.2,
+   "target": "node:t-launch"
+  },
+  {
+   "t": 12.4,
+   "az": 2.42,
+   "el": 0.34,
+   "r": 51,
+   "target": "mid:t-prd,t-launch"
+  },
+  {
+   "t": 15.4,
+   "az": 0.52,
+   "el": 0.3,
+   "r": 81.6,
+   "target": "center"
+  },
+  {
+   "t": 19,
+   "az": 0.6,
+   "el": 0.3,
+   "r": 81.6,
+   "target": "center"
+  }
+ ],
+ "lit": {
+  "path": [
+   4.4,
+   5.6,
+   6.8,
+   8,
+   9.2,
+   10.4
+  ],
+  "release": 15,
+  "second": [],
+  "second_release": null
+ },
+ "nodes": 18,
+ "lang": "en",
+ "preset": "ivory-indigo",
+ "fonts": [
+  "Noto Sans SC",
+  "Noto Serif SC",
+  "Source Serif 4"
+ ],
+ "font_stack": "\"Times New Roman\",\"Source Serif 4\",Georgia,\"Noto Serif SC\",\"Songti SC\",\"Noto Serif CJK SC\",serif",
+ "text_px": {
+  "layer": 18,
+  "axis": 12,
+  "node": 14,
+  "detail": 14,
+  "lit": 20,
+  "lit_cover": 30
+ },
+ "fontsOk": true
+}

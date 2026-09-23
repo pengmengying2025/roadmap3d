@@ -1,0 +1,16 @@
+{
+  "name": "ivory-indigo",
+  "base": "ivory-gold",
+  "lit": {
+    "node": "#6366F1", "glow": "#4F46E5", "tube": "#4F46E5",
+    "tube_glow": { "color": "rgba(99,102,241,0.22)" },
+    "halos": [
+      { "color": "rgba(129,140,248,0.45)", "radius": 1.6, "soft": 0.6 },
+      { "color": "rgba(99,102,241,0.18)", "radius": 2.6, "soft": 0.85 }
+    ],
+    "spark_color": "#E0E7FF",
+    "ring": "#3730A3"
+  },
+  "label": { "lit_border": "rgba(55,48,163,0.85)" },
+  "hud": { "caption_em": "#4F46E5", "tail_border": "rgba(55,48,163,0.45)" }
+}

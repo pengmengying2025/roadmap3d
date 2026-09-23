@@ -1,0 +1,165 @@
+{
+ "cover_t": 4.85,
+ "bounds": {
+  "xmin": -17,
+  "xmax": 17.000000000000004,
+  "ymin": 0,
+  "ymax": 12.65,
+  "zmin": -9.81,
+  "zmax": 0
+ },
+ "R0": 68,
+ "center": [
+  1.7763568394002505e-15,
+  6.325,
+  -4.905
+ ],
+ "lanes": {
+  "infra": [
+   -17,
+   -9.1
+  ],
+  "commerce": [
+   -8.299999999999999,
+   3.5500000000000025
+  ],
+  "identity": [
+   4.350000000000003,
+   8.300000000000004
+  ],
+  "ux": [
+   9.100000000000003,
+   17.000000000000004
+  ]
+ },
+ "camera": [
+  {
+   "t": 0,
+   "az": 0.32,
+   "el": 0.3,
+   "r": 68,
+   "target": "center"
+  },
+  {
+   "t": 3.5,
+   "az": 0.58,
+   "el": 0.32,
+   "r": 65.28,
+   "target": "center"
+  },
+  {
+   "t": 4.9,
+   "az": 2.5,
+   "el": 0.3,
+   "r": 34,
+   "target": "mid:u-retry,c-db"
+  },
+  {
+   "t": 5.7,
+   "az": 2.46,
+   "el": 0.3,
+   "r": 32.64,
+   "target": "mid:u-retry,c-db"
+  },
+  {
+   "t": 6,
+   "az": 2.42,
+   "el": 0.3,
+   "r": 34,
+   "target": "mid:u-retry,s-orders"
+  },
+  {
+   "t": 7,
+   "az": 2.42,
+   "el": 0.3,
+   "r": 32.64,
+   "target": "mid:c-db,s-orders"
+  },
+  {
+   "t": 7.3,
+   "az": 2.38,
+   "el": 0.3,
+   "r": 34,
+   "target": "mid:c-db,a-rest"
+  },
+  {
+   "t": 8.3,
+   "az": 2.38,
+   "el": 0.3,
+   "r": 32.64,
+   "target": "mid:s-orders,a-rest"
+  },
+  {
+   "t": 8.6,
+   "az": 2.34,
+   "el": 0.3,
+   "r": 34,
+   "target": "mid:s-orders,p-web"
+  },
+  {
+   "t": 9.6,
+   "az": 2.34,
+   "el": 0.3,
+   "r": 34,
+   "target": "mid:a-rest,p-web"
+  },
+  {
+   "t": 9.9,
+   "az": 2.3,
+   "el": 0.31,
+   "r": 36.72,
+   "target": "mid:a-rest,p-web"
+  },
+  {
+   "t": 11.7,
+   "az": 2.42,
+   "el": 0.34,
+   "r": 42.16,
+   "target": "mid:u-retry,p-web"
+  },
+  {
+   "t": 14.4,
+   "az": 0.52,
+   "el": 0.3,
+   "r": 65.28,
+   "target": "center"
+  },
+  {
+   "t": 19,
+   "az": 0.6,
+   "el": 0.3,
+   "r": 65.28,
+   "target": "center"
+  }
+ ],
+ "lit": {
+  "path": [
+   4.5,
+   5.8,
+   7.1,
+   8.4,
+   9.7
+  ],
+  "release": 14,
+  "second": [],
+  "second_release": null
+ },
+ "nodes": 26,
+ "lang": "en",
+ "preset": "ivory-gold",
+ "fonts": [
+  "Noto Sans SC",
+  "Noto Serif SC",
+  "Source Serif 4"
+ ],
+ "font_stack": "\"Times New Roman\",\"Source Serif 4\",Georgia,\"Noto Serif SC\",\"Songti SC\",\"Noto Serif CJK SC\",serif",
+ "text_px": {
+  "layer": 18,
+  "axis": 12,
+  "node": 14,
+  "detail": 14,
+  "lit": 20,
+  "lit_cover": 30
+ },
+ "fontsOk": true
+}

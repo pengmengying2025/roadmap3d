@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html><head><meta charset="utf-8"><title>layergraph engine</title>
+<style>
+  :root{--s:1;--font:serif;--em:inherit;--radius:12px}
+  html,body{margin:0;overflow:hidden;background:#000}
+  #c,#bg,#vig{position:absolute;left:0;top:0}
+  #vig{pointer-events:none}
+  #hud{position:absolute;left:0;top:0;width:1920px;height:1080px;zoom:var(--s);font-family:var(--font);letter-spacing:-0.01em;font-kerning:normal}
+  #brand{position:absolute;left:56px;top:44px;font-weight:600;font-size:24px}
+  #brand small{display:block;font-weight:400;font-size:13px;margin-top:6px;letter-spacing:0}
+  #legend{position:absolute;right:56px;top:76px;font-size:12px;text-align:right;line-height:1.8}
+  #legend i{display:inline-block;width:9px;height:9px;border-radius:50%;margin:0 7px 0 16px;vertical-align:0}
+  #legend i.leaf{border-radius:2px;transform:rotate(45deg)}
+  #legend i.minor{width:7px;height:7px;border:2px solid}
+  #cap{position:absolute;left:50%;bottom:36px;transform:translateX(-50%);max-width:1100px;padding:12px 26px;border-radius:var(--radius);text-align:center;opacity:0}
+  #cap .t{font-weight:600;font-size:22px;line-height:1.35}
+  #cap .t em{font-style:normal;font-weight:600;color:var(--em)}
+  #cap .s{font-size:15px;margin-top:5px;line-height:1.5;font-weight:400}
+  #tail{position:absolute;left:56px;bottom:44px;max-width:600px;padding:10px 20px;border-radius:var(--radius);font-size:20px;font-weight:600;border:1px solid;opacity:0}
+  .hide{display:none!important}
+</style></head>
+<body>
+<div id="bg"></div><canvas id="c"></canvas><div id="vig"></div>
+<div id="hud"><div id="brand"></div><div id="legend"></div><div id="cap"><div class="t"></div><div class="s"></div></div><div id="tail"></div></div>
+<script type="module">
+/* layergraph engine — reads window.__LG = {spec, preset, lang, fonts:[{family,weight,file}]} (injected by capture.mjs).
+   All content, colours and timing come from the spec + preset; nothing is hard-coded here. */
+import * as THREE from '/vendor/three.module.js';
+const CFG = window.__LG || {}; const SPEC = CFG.spec; const P = CFG.preset;
+const M = SPEC.meta || {}; const LANG = CFG.lang || M.lang || 'en';
+const T = x => { if (x == null) return ''; if (typeof x === 'string') return x; return x[LANG] ?? x.en ?? x.zh ?? Object.values(x)[0] ?? ''; };
+const [W, H] = M.size || [1920, 1080]; const T_END = M.duration || 21; const S = H / 1080;
+const $ = id => document.getElementById(id);
+const clamp = (x, a, b) => Math.min(b, Math.max(a, x));
+const smooth = (a, b, t) => { const x = clamp((t - a) / (b - a), 0, 1); return x * x * (3 - 2 * x); };
+
+// ---------- fonts & HUD styling ----------
+const FONTS = M.fonts || {}; const fam = f => Array.isArray(f) ? f.map(x => /^[\w-]+$/.test(x) ? x : '"' + x + '"').join(',') : f;
+const FONT_LATIN = fam(FONTS.family) || '"Times New Roman","Source Serif 4",Georgia', FONT_CJK = FONTS.cjk || FONTS.serif || 'Noto Serif SC';
+const STACK = `${FONT_LATIN},"${FONT_CJK}","Songti SC","Noto Serif CJK SC",serif`;   // Latin faces first, CJK fallback after them, generic serif last
+const PX = { layer: 18, axis: 12, node: 14, detail: 14, lit: 20, lit_cover: 30, ...(FONTS.sizes || {}) }; const TXT = FONTS.scale || 1; const px = k => PX[k] * TXT;   // text sizes in px at 1080p
+const DPR = window.devicePixelRatio || 1; const K = 2 * DPR * S;   // label canvases are drawn at 2× their on-screen size
+const R = document.documentElement.style; R.setProperty('--s', S); R.setProperty('--font', STACK); if (P.hud.caption_em) R.setProperty('--em', P.hud.caption_em); if (P.hud.radius != null) R.setProperty('--radius', P.hud.radius + 'px');
+const BG = typeof P.bg === 'string' ? { center: P.bg, edge: P.bg, vignette: 0 } : P.bg; const BG_EDGE = BG.edge || BG.center;
+document.body.style.background = BG_EDGE; const cv = $('c'); cv.width = W; cv.height = H; cv.style.width = W + 'px'; cv.style.height = H + 'px';
+const bgEl = $('bg'), vigEl = $('vig'); [bgEl, vigEl].forEach(el => { el.style.width = W + 'px'; el.style.height = H + 'px'; });
+bgEl.style.background = BG.edge && BG.edge !== BG.center ? `radial-gradient(ellipse at 50% 42%, ${BG.center} 0%, ${BG.edge} 100%)` : BG.center;
+vigEl.style.background = BG.vignette ? `radial-gradient(ellipse at 50% 50%, rgba(0,0,0,0) 52%, rgba(0,0,0,${BG.vignette}) 100%)` : 'none';
+const hud = $('hud'); hud.style.width = '1920px'; hud.style.height = '1080px';
+const brandEl = $('brand'), legendEl = $('legend'), capEl = $('cap'), capT = capEl.querySelector('.t'), capS = capEl.querySelector('.s'), tailEl = $('tail');
+brandEl.style.color = P.hud.brand_fg; legendEl.style.color = P.hud.legend_fg;
+capEl.style.background = P.hud.caption_bg; capEl.style.boxShadow = P.hud.caption_shadow; capEl.style.border = P.hud.caption_border ? '1px solid ' + P.hud.caption_border : 'none'; capT.style.color = P.hud.caption_fg; capS.style.color = P.hud.caption_fg;
+tailEl.style.color = P.hud.tail_fg; tailEl.style.background = P.hud.tail_bg; tailEl.style.borderColor = P.hud.tail_border;
+const esc = s => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+const mark = s => esc(s).replace(/\*(.+?)\*/g, '<em>$1</em>');   // *text* → accent
+const OV = SPEC.overlays || {};
+if (OV.brand !== false && (M.title || M.subtitle)) { brandEl.innerHTML = esc(T(M.title)) + (M.subtitle ? '<small>' + esc(T(M.subtitle)) + '</small>' : ''); brandEl.querySelector('small') && (brandEl.querySelector('small').style.color = P.hud.brand_sub); } else brandEl.classList.add('hide');
+
+// ---------- spec → layout ----------
+const AX = SPEC.axes || {}; const AL = AX.layer || {}, AG = AX.group || {}, AD = AX.depth || null;
+const GAP = AL.gap ?? 3.2, SUBGAP = AL.sublayer_gap ?? 1.3;
+const DZ = AD ? (AD.gap ?? -3.0) : 0; const LEVELS = AD ? (AD.levels || []) : [];
+const LEAF_Z = AD ? (AD.leaf_z ?? DZ * 3.27) : -3.0;
+const layers = SPEC.layers; const lIdx = {}; layers.forEach((l, i) => lIdx[l.id] = i);
+const subCount = l => Array.isArray(l.sublayers) ? l.sublayers.length : (l.sublayers || 1);
+const yOf = (li, sub) => li * GAP + (sub || 0) * SUBGAP;
+const groups = SPEC.groups && SPEC.groups.length ? SPEC.groups : [{ id: '_', label: '' }];
+const gIdx = {}; groups.forEach((g, i) => gIdx[g.id] = i);
+const nodes = SPEC.nodes; const byId = {}; nodes.forEach(n => byId[n.id] = n);
+const kindOf = n => n.kind || 'major';
+const majors = nodes.filter(n => kindOf(n) === 'major');
+const cell = {}; majors.forEach(n => { const k = n.layer + '|' + (n.sublayer || 0) + '|' + (n.group || '_'); (cell[k] = cell[k] || []).push(n); });
+const weights = groups.map(g => { let mx = 1; for (const k in cell) if (k.endsWith('|' + g.id)) mx = Math.max(mx, cell[k].length); return mx; });
+const TOTAL_W = AG.width ?? Math.max(18, 4.5 * groups.length + 2 * weights.reduce((a, b) => a + b, 0)); const PAD = AG.lane_gap ?? 0.8; const CX = AG.center ?? 0;
+const LANES = {}; { const sum = weights.reduce((a, b) => a + b, 0); const unit = (TOTAL_W - PAD * (groups.length - 1)) / sum; let x = CX - TOTAL_W / 2;
+  groups.forEach((g, i) => { const w = weights[i] * unit; LANES[g.id] = g.lane || [x, x + w]; x += w + PAD; }); }
+const pos = {};
+Object.values(cell).forEach(arr => { arr.sort((a, b) => (a.order ?? 0) - (b.order ?? 0)); const [x0, x1] = LANES[arr[0].group || '_']; const n = arr.length;
+  arr.forEach((u, i) => { const x = n === 1 ? (x0 + x1) / 2 : x0 + (x1 - x0) * i / (n - 1); pos[u.id] = new THREE.Vector3(x, yOf(lIdx[u.layer], u.sublayer), ((u.depth ?? 1) - 1) * DZ); }); });
+const childrenOf = {}; nodes.forEach(n => { if (n.parent) (childrenOf[n.parent] = childrenOf[n.parent] || []).push(n); });
+const minors = nodes.filter(n => kindOf(n) === 'minor'), leaves = nodes.filter(n => kindOf(n) === 'leaf');
+minors.forEach(k => { const sib = (childrenOf[k.parent] || []).filter(kindOf.bind(null)).filter(c => kindOf(c) === 'minor'); const idx = sib.indexOf(k), n = sib.length; const up = pos[k.parent];
+  const a = (idx + 0.5) / n * Math.PI * 1.6 - Math.PI * 0.8 + Math.PI / 2; const r = 0.62 + 0.08 * (idx % 2); const dz = ((k.depth ?? byId[k.parent].depth ?? 1) - 1) * DZ;
+  pos[k.id] = new THREE.Vector3(up.x + r * Math.cos(a) * 1.15, up.y + 0.28 - 0.22 * (idx % 3), dz + 0.9 + 0.35 * Math.sin(a)); });
+const SPREAD = [0, 0.9, -0.9, 1.8, -1.8, 2.7, -2.7, 3.6, -3.6]; const leafCount = {}; const orphans = leaves.filter(l => !l.parent);
+leaves.forEach(l => { const gy = yOf(lIdx[l.layer], 0) + 0.65;
+  if (l.parent && pos[l.parent]) { const c = (leafCount[l.parent] = (leafCount[l.parent] || 0) + 1); const up = pos[l.parent]; pos[l.id] = new THREE.Vector3(up.x + (SPREAD[c - 1] || 0) * 0.6, gy + 0.35 * ((c - 1) % 2), LEAF_Z); }
+  else { const j = orphans.indexOf(l), n = orphans.length; const [x0, x1] = LANES[l.group || groups[0].id] || [CX - TOTAL_W / 2, CX + TOTAL_W / 2]; pos[l.id] = new THREE.Vector3(n === 1 ? (x0 + x1) / 2 : x0 + (x1 - x0) * j / (n - 1), gy - 0.4, LEAF_Z - 1.2); } });
+const B = { xmin: 1e9, xmax: -1e9, ymin: 1e9, ymax: -1e9, zmin: 1e9, zmax: -1e9 };
+Object.values(pos).forEach(p => { B.xmin = Math.min(B.xmin, p.x); B.xmax = Math.max(B.xmax, p.x); B.ymin = Math.min(B.ymin, p.y); B.ymax = Math.max(B.ymax, p.y); B.zmin = Math.min(B.zmin, p.z); B.zmax = Math.max(B.zmax, p.z); });
+groups.forEach(g => { B.xmin = Math.min(B.xmin, LANES[g.id][0]); B.xmax = Math.max(B.xmax, LANES[g.id][1]); });
+const CTR = new THREE.Vector3((B.xmin + B.xmax) / 2, (B.ymin + B.ymax) / 2, (B.zmin + B.zmax) / 2);
+const R0 = Math.max((B.xmax - B.xmin) * 2.0, (B.ymax - B.ymin + 1) * 3.0, (B.zmax - B.zmin + 1) * 3.0, 12);
+const zTop = B.zmax + 1.0, zBot = B.zmin - 1.1;
+
+// ---------- three ----------
+const renderer = new THREE.WebGLRenderer({ canvas: cv, antialias: true, preserveDrawingBuffer: true, alpha: true });
+renderer.setPixelRatio(window.devicePixelRatio || 1); renderer.setSize(W, H, false); renderer.setClearColor(0x000000, 0);
+const FOG = typeof P.fog === 'string' ? { color: P.fog, near: 0.85, far: 1.85 } : P.fog;
+const scene = new THREE.Scene(); scene.fog = new THREE.Fog(new THREE.Color(FOG.color || BG_EDGE), R0 * (FOG.near ?? 0.85), R0 * (FOG.far ?? 1.85));
+const camera = new THREE.PerspectiveCamera(36, W / H, 0.1, R0 * 6);
+scene.add(new THREE.HemisphereLight(0xffffff, new THREE.Color(P.light.ground), P.light.hemi));
+const dl = new THREE.DirectionalLight(0xffffff, P.light.dir); dl.position.set(20, 30, 25); scene.add(dl);
+function roundRect(c, x, y, w, h, r) { c.beginPath(); c.moveTo(x + r, y); c.arcTo(x + w, y, x + w, y + h, r); c.arcTo(x + w, y + h, x, y + h, r); c.arcTo(x, y + h, x, y, r); c.arcTo(x, y, x + w, y, r); c.closePath(); }
+const CANVAS_LS = 'letterSpacing' in CanvasRenderingContext2D.prototype;
+function makeText(text, opt = {}) {
+  const fs = Math.round((opt.px || 14) * K), pad = Math.round(fs * (opt.pad ?? 0.45)), font = (opt.weight || '400') + ' ' + fs + 'px ' + STACK; const ls = (-0.012 * fs).toFixed(2) + 'px';
+  const c = document.createElement('canvas'); const ctx = c.getContext('2d'); ctx.font = font; if (CANVAS_LS) ctx.letterSpacing = ls;
+  const sh = opt.bg ? (opt.shadow ?? P.label.shadow ?? 0) : 0; const mg = sh > 0 ? Math.round(fs * 0.5) : 0;
+  const tw = Math.ceil(ctx.measureText(text).width); c.width = tw + pad * 2 + mg * 2; c.height = Math.round(fs * 1.5) + mg * 2;   // box height = 1.5 × font size (fitPx relies on it)
+  const c2 = c.getContext('2d'); c2.font = font; if (CANVAS_LS) c2.letterSpacing = ls; c2.textBaseline = 'middle';
+  if (opt.bg) { if (sh > 0) { c2.shadowColor = `rgba(0,0,0,${sh})`; c2.shadowBlur = fs * 0.35; c2.shadowOffsetY = fs * 0.12; }
+    const bw = c.width - 2 * mg - 2, bh = c.height - 2 * mg - 2; const r = Math.min((opt.radius ?? P.label.radius ?? 6) * K / 2, bh / 2);   // radius / border are in on-screen px
+    c2.fillStyle = opt.bg; roundRect(c2, mg + 1, mg + 1, bw, bh, r); c2.fill(); c2.shadowColor = 'transparent'; c2.shadowBlur = 0; c2.shadowOffsetY = 0;
+    if (opt.border) { c2.strokeStyle = opt.border; c2.lineWidth = (opt.borderWidth ?? 1) * K / 2; c2.stroke(); } }
+  c2.fillStyle = opt.color || '#FFFFFF'; c2.fillText(text, mg + pad, c.height / 2 + fs * 0.04);
+  const tex = new THREE.CanvasTexture(c); tex.minFilter = THREE.LinearMipmapLinearFilter; tex.generateMipmaps = true; tex.colorSpace = THREE.SRGBColorSpace;
+  const m = new THREE.SpriteMaterial({ map: tex, transparent: true, depthTest: false, depthWrite: false, opacity: opt.opacity == null ? 1 : opt.opacity });
+  const s = new THREE.Sprite(m); s.scale.set(c.width * 0.01, c.height * 0.01, 1); s.renderOrder = 20; s.userData.txt = text; s.userData.opt = opt; s.userData.px = opt.px || 14; s.userData.fs = fs; return s;
+}
+function haloTex() { const c = document.createElement('canvas'); c.width = c.height = 256; const g = c.getContext('2d'); const gr = g.createRadialGradient(128, 128, 10, 128, 128, 128); gr.addColorStop(0, 'rgba(255,255,255,1)'); gr.addColorStop(0.35, 'rgba(255,255,255,0.55)'); gr.addColorStop(1, 'rgba(255,255,255,0)'); g.fillStyle = gr; g.fillRect(0, 0, 256, 256); const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; return t; }
+const HALO = haloTex(); const HBLEND = P.lit.halo_blend === 'additive' ? THREE.AdditiveBlending : THREE.NormalBlending;
+function makeHalo() { const m = new THREE.SpriteMaterial({ map: HALO, color: new THREE.Color(P.lit.glow), transparent: true, opacity: 0, depthWrite: false, blending: HBLEND, fog: false }); const s = new THREE.Sprite(m); s.scale.set(2.2, 2.2, 1); s.renderOrder = 5; return s; }
+function ringTex() { const c = document.createElement('canvas'); c.width = c.height = 256; const g = c.getContext('2d'); g.strokeStyle = '#fff'; g.lineWidth = P.lit.ring_width ?? 3.5; g.beginPath(); g.arc(128, 128, 118, 0, Math.PI * 2); g.stroke(); const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; return t; }
+const RING_LINE = !!P.lit.ring && P.lit.ring_style === 'line';   // "line" = a true 1 px outline at any zoom; default = textured sprite ring
+const RING = P.lit.ring && !RING_LINE ? ringTex() : null; const RING_SCALE = P.lit.ring_scale ?? 1.3, RING_OP = P.lit.ring_opacity ?? 0.9;   // outline around lit nodes (lit.ring = colour; omit for none)
+const CIRCLE = (() => { const pts = []; for (let k = 0; k <= 72; k++) { const a = k / 72 * Math.PI * 2; pts.push(new THREE.Vector3(Math.cos(a), Math.sin(a), 0)); } return new THREE.BufferGeometry().setFromPoints(pts); })();
+function makeRing() { if (RING_LINE) { const l = new THREE.Line(CIRCLE, new THREE.LineBasicMaterial({ color: new THREE.Color(P.lit.ring), transparent: true, opacity: 0, depthWrite: false, fog: false })); l.renderOrder = 7; l.userData.lit = true; return l; }
+  const m = new THREE.SpriteMaterial({ map: RING, color: new THREE.Color(P.lit.ring), transparent: true, opacity: 0, depthWrite: false, fog: false }); const s = new THREE.Sprite(m); s.renderOrder = 7; return s; }
+// Colour strings: "#hex" or "rgba(r,g,b,a)" → {color, a}
+const rgba = str => { const m = /^rgba?\(([^)]+)\)$/.exec(String(str).replace(/\s/g, '')); if (!m) return { color: new THREE.Color(str), a: 1 }; const [r, g, b, a = 1] = m[1].split(',').map(Number); return { color: new THREE.Color(`rgb(${r},${g},${b})`), a }; };
+// Soft disc: alpha 1 in the middle, smooth fall-off over the outer `soft` fraction of the radius
+function softDiscTex(soft) { const c = document.createElement('canvas'); c.width = c.height = 256; const g = c.getContext('2d'); const gr = g.createRadialGradient(128, 128, 0, 128, 128, 128); const s0 = clamp(1 - soft, 0, 0.98);
+  gr.addColorStop(0, 'rgba(255,255,255,1)'); for (let k = 0; k <= 12; k++) { const x = k / 12; gr.addColorStop(s0 + (1 - s0) * x, `rgba(255,255,255,${(1 - x * x * (3 - 2 * x)).toFixed(3)})`); } g.fillStyle = gr; g.fillRect(0, 0, 256, 256); const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; return t; }
+// Layered halos (light presets): lit.halos = [{color, radius (× lit-node radius), soft, blend}], normal-blended, inner first
+const HALOS = (P.lit.halos || []).map(h => { const c = rgba(h.color); return { color: c.color, a: h.opacity ?? c.a, radius: h.radius ?? 1.6, tex: softDiscTex(h.soft ?? 0.6), blend: h.blend === 'additive' ? THREE.AdditiveBlending : THREE.NormalBlending }; });
+function makeHaloLayers() { return HALOS.map((h, k) => { const s = new THREE.Sprite(new THREE.SpriteMaterial({ map: h.tex, color: h.color, transparent: true, opacity: 0, depthWrite: false, blending: h.blend, fog: false })); s.renderOrder = 5 - 0.01 * k; return s; }); }   // outer layers draw first
+// Soft band along each lit edge (lit.tube_glow = {color, width (× tube diameter)}): a camera-facing ribbon with a feathered edge
+function bandTex() { const c = document.createElement('canvas'); c.width = 4; c.height = 128; const g = c.getContext('2d'); const gr = g.createLinearGradient(0, 0, 0, 128); for (let k = 0; k <= 16; k++) { const y = k / 16, d = Math.abs(y - 0.5) * 2; gr.addColorStop(y, `rgba(255,255,255,${(1 - d * d * (3 - 2 * d)).toFixed(3)})`); } g.fillStyle = gr; g.fillRect(0, 0, 4, 128); const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; return t; }
+const TG = P.lit.tube_glow ? (() => { const c = rgba(P.lit.tube_glow.color); return { color: c.color, a: P.lit.tube_glow.opacity ?? c.a, w: (P.lit.tube_glow.width ?? 4) * 2 * P.lit.tube_radius, tex: bandTex() }; })() : null;
+const RIBBON = new THREE.PlaneGeometry(1, 1).translate(0.5, 0, 0);
+function glowRibbon(a, b) { const m = new THREE.Mesh(RIBBON, new THREE.MeshBasicMaterial({ map: TG.tex, color: TG.color, transparent: true, opacity: 0, depthWrite: false, side: THREE.DoubleSide, fog: false })); m.position.copy(a); m.renderOrder = 4; m.userData = { lit: true, a: a.clone(), b: b.clone(), len: a.distanceTo(b) }; scene.add(m); return m; }
+const _rd = new THREE.Vector3(), _rw = new THREE.Vector3(), _rn = new THREE.Vector3(), _rmid = new THREE.Vector3(), _rm = new THREE.Matrix4();
+function orientRibbon(rb, k) { _rd.subVectors(rb.userData.b, rb.userData.a).normalize(); _rmid.lerpVectors(rb.userData.a, rb.userData.b, 0.5); _rn.subVectors(camera.position, _rmid).normalize(); _rw.crossVectors(_rn, _rd).normalize(); _rn.crossVectors(_rd, _rw).normalize();
+  _rm.makeBasis(_rd, _rw, _rn); rb.quaternion.setFromRotationMatrix(_rm); rb.scale.set(Math.max(k, 0.0001) * rb.userData.len, TG.w, 1); }
+
+// ---------- floors & axes ----------
+function floorTex(color, aNear, aFar) { const c = document.createElement('canvas'); c.width = 4; c.height = 256; const g = c.getContext('2d'); const col = new THREE.Color(color); const rgb = `${Math.round(col.r * 255)},${Math.round(col.g * 255)},${Math.round(col.b * 255)}`;
+  const gr = g.createLinearGradient(0, 0, 0, 256); gr.addColorStop(0, `rgba(${rgb},${aFar})`); gr.addColorStop(1, `rgba(${rgb},${aNear})`); g.fillStyle = gr; g.fillRect(0, 0, 4, 256); const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; return t; }
+const floorMat = new THREE.MeshBasicMaterial({ map: floorTex(P.floor.color, P.floor.opacity, P.floor.opacity_far ?? P.floor.opacity * 0.15), transparent: true, side: THREE.DoubleSide, depthWrite: false });
+const floorEdge = new THREE.LineBasicMaterial({ color: new THREE.Color(P.floor.edge || P.floor.color), transparent: true, opacity: P.floor.edge_opacity });
+const layerLabels = [], axisLabels = []; const fx0 = B.xmin - 1.05, fx1 = B.xmax + 1.05;
+layers.forEach((l, i) => { const y = yOf(i, 0) - 0.7;
+  if (AL.show_floors !== false) { const p = new THREE.Mesh(new THREE.PlaneGeometry(fx1 - fx0, zTop - zBot), floorMat); p.rotation.x = -Math.PI / 2; p.position.set((fx0 + fx1) / 2, y, (zTop + zBot) / 2); scene.add(p);
+    const pts = [[fx0, y, zTop], [fx1, y, zTop], [fx1, y, zBot], [fx0, y, zBot], [fx0, y, zTop]].map(a => new THREE.Vector3(...a)); scene.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts), floorEdge)); }
+  const lab = makeText(T(l.label), { px: px('layer'), color: P.label.layer, weight: '600' }); lab.position.set(fx0 - 0.5, y + 1.2, zTop - 0.7); scene.add(lab); layerLabels.push(lab); });
+const axisOpt = { px: px('axis'), color: P.label.axis, weight: '400' };
+groups.forEach(g => { if (!g.label) return; const [x0, x1] = LANES[g.id]; const s = makeText(T(g.label), axisOpt); s.position.set((x0 + x1) / 2, -1.5, zTop + 0.9); scene.add(s); axisLabels.push(s); });
+if (AG.label) { const s = makeText(T(AG.label), { ...axisOpt, weight: '600' }); s.position.set(CX, -2.7, zTop + 0.9); scene.add(s); axisLabels.push(s); }
+if (AL.label) { const s = makeText(T(AL.label), { ...axisOpt, weight: '600' }); s.position.set(fx0 - 0.5, B.ymax + 1.3, zTop - 0.7); scene.add(s); axisLabels.push(s); }
+if (AD) { const rows = LEVELS.map((lv, k) => [T(lv.label), k * DZ]); if (leaves.length && AD.leaf_label) rows.push([T(AD.leaf_label), LEAF_Z]);
+  let last = null; rows.forEach(([t, z], k) => { const s = makeText(t, axisOpt); s.position.set(B.xmax + 2.4 + k * 0.7, -1.1 - k * 0.45, z); scene.add(s); axisLabels.push(s); last = s.position; });
+  if (AD.label && last) { const s = makeText(T(AD.label), { ...axisOpt, weight: '600' }); s.position.set(last.x + 1.0, last.y + 0.05, last.z - 3.7); scene.add(s); axisLabels.push(s); } }
+
+// ---------- nodes & edges ----------
+const nodeMesh = {}, nodeBase = {}, baseScale = {};
+const sphereGeo = new THREE.SphereGeometry(0.27, 18, 14), minorGeo = new THREE.SphereGeometry(0.115, 12, 10), leafGeo = new THREE.OctahedronGeometry(0.17); const RAD = { major: 0.27, minor: 0.115, leaf: 0.17 };
+const tintOf = (n, list) => new THREE.Color((n.color) || (groups[gIdx[n.group]] && groups[gIdx[n.group]].color) || list[(gIdx[n.group] ?? 0) % list.length]);
+const NOP = P.node.opacity ?? 0.94, LS = P.node.leaf_scale ?? 1;
+majors.forEach(u => { const c = tintOf(u, P.node.tints); const m = new THREE.MeshLambertMaterial({ color: c, transparent: true, opacity: NOP }); const s = new THREE.Mesh(sphereGeo, m); s.position.copy(pos[u.id]); scene.add(s); nodeMesh[u.id] = s; nodeBase[u.id] = c.clone(); baseScale[u.id] = 1; });
+minors.forEach(k => { const c = tintOf({ ...k, group: k.group || byId[k.parent].group }, P.node.minor_tints); const m = new THREE.MeshLambertMaterial({ color: c, transparent: true, opacity: 0.9 }); const s = new THREE.Mesh(minorGeo, m); s.position.copy(pos[k.id]); scene.add(s); nodeMesh[k.id] = s; nodeBase[k.id] = c.clone(); baseScale[k.id] = 1; });
+leaves.forEach(l => { const live = l.state === 'live'; const c = new THREE.Color(live ? P.node.leaf_live : P.node.leaf_dim); const m = new THREE.MeshLambertMaterial({ color: c, transparent: true, opacity: live ? 1 : (l.parent ? 0.55 : 0.35) }); const s = new THREE.Mesh(leafGeo, m); s.position.copy(pos[l.id]); s.scale.setScalar((live ? P.node.leaf_live_scale : 1) * LS); baseScale[l.id] = (live ? P.node.leaf_live_scale : 1) * LS; scene.add(s); nodeMesh[l.id] = s; nodeBase[l.id] = c.clone(); });
+function seg(list, color, opacity) { if (!list.length) return; const g = new THREE.BufferGeometry().setFromPoints(list); scene.add(new THREE.LineSegments(g, new THREE.LineBasicMaterial({ color: new THREE.Color(color), transparent: true, opacity }))); }
+const E = { dep: [], link: [], member: [], leaf: [] };
+(SPEC.edges || []).forEach(e => { const k = E[e.kind || 'dep'] ? (e.kind || 'dep') : 'link'; if (pos[e.from] && pos[e.to]) E[k].push(pos[e.from], pos[e.to]); });
+minors.forEach(k => E.member.push(pos[k.parent], pos[k.id])); leaves.forEach(l => { if (l.parent && pos[l.parent]) E.leaf.push(pos[l.id], pos[l.parent]); });
+seg(E.dep, P.edge.dep, P.edge.dep_opacity); seg(E.link, P.edge.link, P.edge.link_opacity); seg(E.member, P.edge.member, P.edge.member_opacity); seg(E.leaf, P.edge.leaf, P.edge.leaf_opacity);
+
+// ---------- highlight paths ----------
+const HL = SPEC.highlight || {}; const A = (HL.path || []).filter(id => pos[id]); const SEC = HL.second || {}; const Bp = (SEC.path || []).filter(id => pos[id]);
+const LA = HL.lit_at || A.map((_, i) => +(T_END * (0.24 + 0.085 * i)).toFixed(2)); const REL = HL.release_at ?? +(T_END * 0.63).toFixed(2);
+const LB = SEC.lit_at || Bp.map((_, i) => +(T_END * (0.686 + 0.043 * i)).toFixed(2)); const RELB = SEC.release_at ?? null;
+const EA = A.slice(1).map((_, i) => [LA[i + 1] - 0.8, LA[i + 1]]), EB = Bp.slice(1).map((_, i) => [LB[i + 1] - 0.7, LB[i + 1]]);
+const litOpt = { px: px('lit'), color: P.label.lit_fg, weight: '600', bg: P.label.lit_bg, border: P.label.lit_border, opacity: 0 };
+const geoOf = id => ({ minor: minorGeo, leaf: leafGeo })[kindOf(byId[id])] || sphereGeo;
+const mkPath = (ids, labels) => ({ ids, P: ids.map(id => pos[id]),
+  fills: ids.map(id => { const f = new THREE.Mesh(geoOf(id), new THREE.MeshBasicMaterial({ color: new THREE.Color(P.lit.node), transparent: true, opacity: 0, fog: false, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -8 })); f.position.copy(pos[id]); f.renderOrder = 3; f.visible = false; f.userData.lit = true; scene.add(f); return f; }),   // unlit: on-screen colour = preset colour
+  halos: ids.map(id => { if (HALOS.length) { const arr = makeHaloLayers(); arr.forEach(h => { h.position.copy(pos[id]); scene.add(h); }); return arr; } const h = makeHalo(); h.position.copy(pos[id]); scene.add(h); return h; }),
+  rings: ids.map(id => { if (!P.lit.ring) return null; const r = makeRing(); r.position.copy(pos[id]); scene.add(r); return r; }),
+  labels: ids.map(id => { const s = makeText(T((labels && labels[id]) || byId[id].label), litOpt); scene.add(s); return s; }), tubes: [], glows: [], sparks: [], mem: ids.map(() => ({})) });
+function tube(a, b) { const dir = new THREE.Vector3().subVectors(b, a); const len = dir.length(); const g = new THREE.CylinderGeometry(P.lit.tube_radius, P.lit.tube_radius, 1, 10); g.translate(0, 0.5, 0);
+  const m = new THREE.MeshBasicMaterial({ color: new THREE.Color(P.lit.tube), transparent: true, opacity: 0, fog: false }); const c = new THREE.Mesh(g, m); c.position.copy(a); c.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), dir.clone().normalize()); c.scale.set(1, 0, 1); c.userData.len = len; c.userData.lit = true; scene.add(c); return c; }
+const PA = mkPath(A, HL.labels), PB = mkPath(Bp, SEC.labels);
+const SPARK = P.lit.spark !== false, SPK = P.lit.spark_scale ?? 1.4, SPK_OP = P.lit.spark_opacity ?? P.lit.halo_opacity ?? 1;
+function spark() { const h = makeHalo(); if (P.lit.spark_color) h.material.color.set(P.lit.spark_color); h.scale.set(SPK, SPK, 1); h.renderOrder = 6; scene.add(h); return h; }
+for (let i = 0; i < A.length - 1; i++) { PA.tubes.push(tube(PA.P[i], PA.P[i + 1])); PA.glows.push(TG ? glowRibbon(PA.P[i], PA.P[i + 1]) : null); PA.sparks.push(spark()); }
+for (let i = 0; i < Bp.length - 1; i++) { PB.tubes.push(tube(PB.P[i], PB.P[i + 1])); PB.glows.push(TG ? glowRibbon(PB.P[i], PB.P[i + 1]) : null); PB.sparks.push(spark()); }
+const inPath = new Set([...A, ...Bp]);
+
+// ---------- far / detail labels (LOD) ----------
+const farPerLayer = (M.lod && M.lod.far_per_layer) ?? 7; const farIds = new Set();
+layers.forEach(l => { const arr = majors.filter(u => u.layer === l.id).slice().sort((a, b) => (inPath.has(b.id) - inPath.has(a.id)) || ((childrenOf[b.id] || []).length - (childrenOf[a.id] || []).length) || ((a.order ?? 0) - (b.order ?? 0))); arr.slice(0, farPerLayer).forEach(u => farIds.add(u.id)); });
+const farLabels = majors.filter(u => farIds.has(u.id)).map(u => { const s = makeText(T(u.short || u.label), { px: px('node'), color: P.label.far, weight: '400', pad: 0.3, opacity: 0 }); s.userData.kind = 'far'; s.userData.id = u.id; s.userData.prio = inPath.has(u.id) ? 0 : 1; s.userData.op = 0; s.userData.cw = s.material.map.image.width; s.userData.ch = s.material.map.image.height; scene.add(s); return s; });
+const minorLabels = minors.map(k => { const s = makeText(T(k.label), { px: px('detail'), color: P.label.detail_fg, weight: '400', bg: P.label.detail_bg, border: P.label.detail_border, opacity: 0 }); s.position.copy(pos[k.id]).add(new THREE.Vector3(0, 0.3, 0.2)); scene.add(s); return s; });
+const leafLabels = leaves.filter(l => l.state === 'live').map(l => { const s = makeText(T(l.label), { px: px('detail'), color: P.label.detail_fg, weight: '400', bg: P.label.detail_bg, border: P.label.detail_border || P.label.lit_border, opacity: 0 }); s.position.copy(pos[l.id]).add(new THREE.Vector3(0, 0.55, 0)); s.userData.id = l.id; scene.add(s); return s; });
+function rebuildLabels() { scene.children.filter(o => o.isSprite && o.material.map && o.userData.txt).forEach(o => { const t = makeText(o.userData.txt, o.userData.opt); o.material.map.dispose(); o.material.map = t.material.map; o.material.needsUpdate = true; if (o.userData.kind === 'far') { o.userData.cw = t.material.map.image.width; o.userData.ch = t.material.map.image.height; } }); }
+
+// ---------- camera ----------
+const mid = (a, b) => new THREE.Vector3().lerpVectors(a, b, 0.5); const centroid = ps => ps.length ? ps.reduce((a, p) => a.add(p), new THREE.Vector3()).multiplyScalar(1 / ps.length) : CTR.clone();
+function target(t) { if (t == null || t === 'center') return CTR.clone(); if (Array.isArray(t)) return new THREE.Vector3(...t); if (t === 'path') return centroid(PA.P); if (t === 'second') return centroid(PB.P);
+  if (t.startsWith('node:')) return pos[t.slice(5)].clone(); if (t.startsWith('mid:')) { const [a, b] = t.slice(4).split(','); return mid(pos[a.trim()], pos[b.trim()]); } throw new Error('bad camera target ' + t); }
+function autoCamera() { const kf = [{ t: 0, az: 0.32, el: 0.30, r: R0, target: 'center' }]; const n = A.length;
+  if (n) { kf.push({ t: Math.max(0.6, Math.min(LA[0] - 1.0, T_END * 0.19)), az: 0.58, el: 0.32, r: R0 * 0.96, target: 'center' });
+    kf.push({ t: LA[0] + 0.4, az: 2.5, el: 0.26, r: R0 * 0.35, target: 'node:' + A[0] });
+    for (let i = 1; i < n; i++) { kf.push({ t: LA[i] - 0.1, az: 2.5 - 0.04 * i, el: 0.28, r: R0 * 0.34, target: `mid:${A[i - 1]},${A[i]}` }); kf.push({ t: LA[i] + 0.2, az: 2.46 - 0.04 * i, el: 0.30, r: R0 * 0.39, target: 'node:' + A[i] }); }
+    kf.push({ t: LA[n - 1] + 2.0, az: 2.42, el: 0.34, r: R0 * 0.52, target: n > 1 ? `mid:${A[0]},${A[n - 1]}` : 'node:' + A[0] });
+    kf.push({ t: REL + 0.4, az: 0.52, el: 0.30, r: R0 * 0.96, target: 'center' }); }
+  if (Bp.length) { kf.push({ t: (n ? REL : T_END * 0.55) + 1.2, az: 0.50, el: 0.26, r: R0 * 0.87, target: 'second' }); kf.push({ t: T_END - 1.4, az: 0.68, el: 0.25, r: R0 * 0.80, target: 'second' }); kf.push({ t: T_END, az: 0.72, el: 0.25, r: R0 * 0.80, target: 'second' }); }
+  else kf.push({ t: T_END, az: (n ? 0.60 : 0.72), el: 0.30, r: R0 * 0.96, target: 'center' });
+  for (let i = 1; i < kf.length; i++) kf[i].t = Math.min(T_END, Math.max(kf[i].t, kf[i - 1].t + 0.2)); return kf; }
+const KF0 = (!SPEC.camera || SPEC.camera === 'auto') ? autoCamera() : SPEC.camera.map(k => ({ ...k }));
+for (let i = 1; i < KF0.length; i++) for (const k of ['az', 'el', 'r', 'target']) if (KF0[i][k] == null) KF0[i][k] = KF0[i - 1][k];
+const KF = KF0.map(k => ({ t: k.t, az: k.az, el: k.el, r: typeof k.r === 'string' ? parseFloat(k.r) * R0 : k.r, tgt: target(k.target), target: k.target }));
+function camAt(t) { let i = 0; while (i < KF.length - 2 && t > KF[i + 1].t) i++; const a = KF[i], b = KF[i + 1]; const k = smooth(a.t, b.t, t);
+  const az = a.az + (b.az - a.az) * k, el = a.el + (b.el - a.el) * k, r = a.r + (b.r - a.r) * k; const tg = new THREE.Vector3().lerpVectors(a.tgt, b.tgt, k);
+  camera.position.set(tg.x + r * Math.cos(el) * Math.sin(az), tg.y + r * Math.sin(el), tg.z + r * Math.cos(el) * Math.cos(az)); camera.lookAt(tg); return tg; }
+
+// ---------- captions, legend, tail ----------
+const CAPS = (SPEC.captions || []).map(c => ({ a: c.a, b: c.b, t: mark(T(c.main)), s: c.sub ? mark(T(c.sub)) : '' }));
+const TAIL = OV.tail || null; if (TAIL) tailEl.innerHTML = esc(T(TAIL.text));
+if (OV.legend === false) legendEl.classList.add('hide'); else { const L = OV.legend && typeof OV.legend === 'object' ? OV.legend : {}; let h = groups.filter(g => g.label).map((g, i) => `<span><i style="background:${g.color || P.node.tints[i % P.node.tints.length]}"></i>${esc(T(g.label))}</span>`).join('');
+  const kinds = L.kinds || {}; const extra = []; if (kinds.leaf && leaves.length) extra.push(`<span><i class="leaf" style="background:${P.node.leaf_dim}"></i>${esc(T(kinds.leaf))}</span>`); if (kinds.minor && minors.length) extra.push(`<span><i class="minor" style="background:${BG_EDGE};border-color:${P.node.minor_tints[0]}"></i>${esc(T(kinds.minor))}</span>`);
+  legendEl.innerHTML = h + (extra.length ? '<br>' + extra.join('') : ''); }
+function setCaption(t) { if (TAIL) tailEl.style.opacity = (t >= TAIL.a ? smooth(TAIL.a, TAIL.a + 0.4, t) * (TAIL.b ? 1 - smooth(TAIL.b - 0.3, TAIL.b, t) : 1) : 0).toFixed(3);
+  const c = CAPS.find(c => t >= c.a && t < c.b); if (!c) { capEl.style.opacity = 0; return; } capT.innerHTML = c.t; capS.innerHTML = c.s; capS.style.display = c.s ? 'block' : 'none';
+  const fin = smooth(c.a, c.a + 0.35, t), fout = 1 - smooth(c.b - 0.3, c.b, t); capEl.style.opacity = Math.min(fin, fout).toFixed(3); }
+
+// ---------- per-frame state ----------
+const tmpC = new THREE.Color(), C_LIT = new THREE.Color(P.lit.node); const [HS0, HS1, HS2] = P.lit.halo_scale || [2.4, 1.2, 0.4]; const [G_BIG, G_SMALL] = P.lit.grow; const LIT_R = RAD.major * (1 + G_SMALL) * Math.max(P.lit.ring ? RING_SCALE : 1.1, HALOS.length ? HALOS[0].radius * 0.8 : 0);   // world radius of a lit node incl. its ring — lit labels sit just outside it
+function lightNode(id, halo, label, lit, pulse, ring, fill) { const m = nodeMesh[id].material; tmpC.copy(nodeBase[id]).lerp(C_LIT, lit); m.color.copy(tmpC); m.opacity = Math.max(m.opacity, lit);
+  const big = kindOf(byId[id]) !== 'major'; nodeMesh[id].scale.setScalar((baseScale[id] || 1) * (1 + (big ? G_BIG : G_SMALL) * lit));
+  const rN = RAD[kindOf(byId[id])] * nodeMesh[id].scale.x;   // current world radius of the node
+  if (fill) { fill.scale.copy(nodeMesh[id].scale).multiplyScalar(1.004); fill.material.opacity = lit; fill.visible = lit > 0.002; }
+  if (Array.isArray(halo)) halo.forEach((h, k) => { h.material.opacity = HALOS[k].a * lit; h.scale.setScalar(2 * rN * HALOS[k].radius); });
+  else { halo.material.opacity = (P.lit.halo_opacity ?? 1) * lit * (0.7 + 0.25 * pulse); halo.scale.setScalar(HS0 + HS1 * lit + HS2 * pulse * lit); }
+  if (ring) { ring.material.opacity = RING_OP * lit; ring.visible = lit > 0.002; if (RING_LINE) { ring.scale.setScalar(rN * RING_SCALE); ring.quaternion.copy(camera.quaternion); } else ring.scale.setScalar(2 * rN * RING_SCALE); }
+  label.material.opacity = lit; if (label.material.opacity <= 0.02) label.position.copy(pos[id]).add(new THREE.Vector3(0.2, 1.0, 0.6)); }
+function setStates(t) { const pulse = 0.5 + 0.5 * Math.sin(t * 5.0); const relA = 1 - smooth(REL, REL + 0.7, t), relB = RELB == null ? 1 : 1 - smooth(RELB, RELB + 0.7, t);
+  A.forEach((id, i) => lightNode(id, PA.halos[i], PA.labels[i], smooth(LA[i] - 0.15, LA[i] + 0.3, t) * relA, pulse, PA.rings[i], PA.fills[i]));
+  const runSpark = (sp, a, b, p0, p1, rel) => { if (!SPARK) return; const k = smooth(a, b, t); sp.position.lerpVectors(p0, p1, k); const on = smooth(a, a + 0.08, t) * (1 - smooth(b, b + 0.3, t)) * rel; sp.material.opacity = SPK_OP * on; sp.scale.setScalar(SPK * (1.1 + 0.35 * pulse)); };
+  PA.tubes.forEach((c, i) => { const [a, b] = EA[i]; const k = smooth(a, b, t) * relA; c.scale.y = Math.max(k, 0.0001) * c.userData.len; c.material.opacity = k; const gl = PA.glows[i]; if (gl) { orientRibbon(gl, k); gl.material.opacity = TG.a * k; } runSpark(PA.sparks[i], a, b, PA.P[i], PA.P[i + 1], relA); });
+  Bp.forEach((id, i) => lightNode(id, PB.halos[i], PB.labels[i], smooth(LB[i] - 0.15, LB[i] + 0.3, t) * relB, pulse, PB.rings[i], PB.fills[i]));
+  PB.tubes.forEach((c, i) => { const [a, b] = EB[i]; const k = smooth(a, b, t) * relB; c.scale.y = Math.max(k, 0.0001) * c.userData.len; c.material.opacity = k; const gl = PB.glows[i]; if (gl) { orientRibbon(gl, k); gl.material.opacity = TG.a * k; } runSpark(PB.sparks[i], a, b, PB.P[i], PB.P[i + 1], relB); }); }
+const _v = new THREE.Vector3(), _r = new THREE.Vector3(), _u = new THREE.Vector3();
+function toScreen(p) { _v.copy(p).project(camera); return { x: (_v.x + 1) / 2 * W, y: (1 - _v.y) / 2 * H, z: _v.z }; }
+function overlap(a, b, pad) { return !(a.x + a.w + pad < b.x || b.x + b.w + pad < a.x || a.y + a.h + pad < b.y || b.y + b.h + pad < a.y); }
+const KEEP_OUT = [{ x: 0, y: 0, w: 0.31 * W, h: 0.12 * H }, { x: W - 0.4 * W, y: 0, w: 0.4 * W, h: 0.12 * H }, { x: W / 2 - 0.4 * W, y: H - 0.176 * H, w: 0.8 * W, h: 0.176 * H }];
+function place(anchor, w, h, gapPx, taken, allowHide, mem) { const sc = toScreen(anchor); if (sc.z > 1) return null;
+  const ring = k => [[0, -(h / 2 + gapPx * k)], [0, (h / 2 + gapPx * k)], [(w / 2 + gapPx * k), 0], [-(w / 2 + gapPx * k), 0], [(w / 2 + gapPx * k) * 0.8, -(h / 2 + gapPx * k) * 0.9], [-(w / 2 + gapPx * k) * 0.8, -(h / 2 + gapPx * k) * 0.9], [(w / 2 + gapPx * k) * 0.8, (h / 2 + gapPx * k) * 0.9], [-(w / 2 + gapPx * k) * 0.8, (h / 2 + gapPx * k) * 0.9]];
+  const cands = [...ring(1), ...ring(2.2), ...ring(3.6)];   /* three rings: near, then farther out, before giving up */
+  const order = [...cands.keys()]; if (mem && mem.last != null) { order.splice(order.indexOf(mem.last), 1); order.unshift(mem.last); }
+  for (const ci of order) { const [dx, dy] = cands[ci]; const r = { x: sc.x + dx - w / 2, y: sc.y + dy - h / 2, w, h, dx, dy }; if (r.x < 8 || r.y < 8 || r.x + r.w > W - 8 || r.y + r.h > H - 8) continue; if (taken.some(t => overlap(r, t, 6)) || KEEP_OUT.some(t => overlap(r, t, 0))) continue; if (mem) mem.last = ci; return r; }
+  if (!allowHide) { const r = { x: sc.x - w / 2, y: sc.y - (h / 2 + gapPx) - h / 2, w, h, dx: 0, dy: -(h / 2 + gapPx) }; const cx = clamp(r.x, 8, W - 8 - w), cy = clamp(r.y, 8, H - 8 - h); r.dx += cx - r.x; r.dy += cy - r.y; r.x = cx; r.y = cy; return r; } return null; }
+function worldPerPx(p) { const d = camera.position.distanceTo(p); return 2 * d * Math.tan(camera.fov * Math.PI / 360) / H; }
+function edgeFade(sp) { const sc = toScreen(sp.position); if (sc.z > 1) return 0; const wpp = worldPerPx(sp.position); const hw = sp.scale.x / wpp / 2, hh = sp.scale.y / wpp / 2;
+  const f = (d) => clamp((d - 4) / 28, 0, 1); return f(sc.x - hw) * f(W - sc.x - hw) * f(sc.y - hh) * f(H - sc.y - hh); }   // fades a label out over 28 px as its box reaches the frame edge
+const boxPx = (sp, pxText) => pxText * S * sp.material.map.image.height / sp.userData.fs;   // sprite image height on screen for a given text size (image = box + shadow margin)
+function fitPx(sp, pxText) { const wpp = worldPerPx(sp.position); const img = sp.material.map.image; const hW = boxPx(sp, pxText) * wpp; sp.scale.set(hW * img.width / img.height, hW, 1); }   // constant on-screen size
+function putSprite(sp, anchor, r, pxH) { const wpp = worldPerPx(anchor); const cw = sp.userData.cw || sp.material.map.image.width, ch = sp.userData.ch || sp.material.map.image.height; const hW = pxH * wpp, wW = hW * cw / ch; sp.scale.set(wW, hW, 1); _r.setFromMatrixColumn(camera.matrixWorld, 0); _u.setFromMatrixColumn(camera.matrixWorld, 1); sp.position.copy(anchor).addScaledVector(_r, r.dx * wpp).addScaledVector(_u, -r.dy * wpp); }
+let COVER = false;
+function setLOD(tgt) { camera.updateMatrixWorld(true); const d = camera.position.distanceTo(tgt);
+  const far = smooth(R0 * 0.45, R0 * 0.63, d); const axisFar = smooth(R0 * 0.61, R0 * 0.80, d); axisLabels.forEach(s => { fitPx(s, s.userData.px); s.material.opacity = axisFar * edgeFade(s); }); layerLabels.forEach(s => { fitPx(s, s.userData.px); s.material.opacity = edgeFade(s); }); minorLabels.forEach(s => fitPx(s, s.userData.px)); leafLabels.forEach(s => fitPx(s, s.userData.px));
+  const taken = []; layerLabels.forEach(sp => { const sc = toScreen(sp.position); if (sc.z > 1) return; const wpp = worldPerPx(sp.position); taken.push({ x: sc.x - sp.scale.x / wpp / 2, y: sc.y - sp.scale.y / wpp / 2, w: sp.scale.x / wpp, h: sp.scale.y / wpp }); });
+  const annot = []; [PA, PB].forEach(PP => PP.ids.forEach((id, i) => { if (PP.labels[i].material.opacity > 0.02) annot.push({ sp: PP.labels[i], id, mem: PP.mem[i] }); }));
+  annot.forEach(a => { const sp = a.sp; const cw = sp.material.map.image.width, ch = sp.material.map.image.height; const h = boxPx(sp, COVER ? px('lit_cover') : px('lit')), w = h * cw / ch; const anchor = pos[a.id]; const nodePx = LIT_R / worldPerPx(anchor); const r = place(anchor, w, h, nodePx + 8, taken, false, a.mem); if (r) { taken.push(r); putSprite(sp, anchor, r, h); } });
+  farLabels.sort((a, b) => a.userData.prio - b.userData.prio);
+  farLabels.forEach(sp => { const anchor = pos[sp.userData.id]; let tg = 0; if (far > 0.02 && !inPath.has(sp.userData.id) || (far > 0.02 && !annot.some(a => a.id === sp.userData.id))) { const h = boxPx(sp, px('node')), w = h * sp.userData.cw / sp.userData.ch; const nodePx = 0.42 / worldPerPx(anchor); const r = place(anchor, w, h, nodePx + 6, taken, true, sp.userData); if (r) { taken.push(r); putSprite(sp, anchor, r, h); tg = 1; } }
+    sp.userData.op += (tg - sp.userData.op) * 0.35; sp.material.opacity = 0.95 * far * sp.userData.op; });
+  const near = 1 - smooth(R0 * 0.30, R0 * 0.48, d);
+  minorLabels.forEach((s, i) => { const dd = pos[minors[i].id].distanceTo(tgt); s.material.opacity = near * (1 - smooth(5.5, 8.5, dd)); });
+  leafLabels.forEach(s => { const dd = pos[s.userData.id].distanceTo(tgt); s.material.opacity = inPath.has(s.userData.id) ? 0 : near * (1 - smooth(6, 9, dd)); }); }
+window.coverMode = function (on) { COVER = !!on; if (!COVER) return; const keep = new Set(A);
+  scene.traverse(o => { if (o.userData && o.userData.lit) return; if (o.isMesh && o.material) { const id = Object.keys(nodeMesh).find(k => nodeMesh[k] === o); if (id && keep.has(id)) return; if (o.geometry && o.geometry.type === 'CylinderGeometry') return; o.material.opacity = (o.material.opacity || 1) * P.cover.dim_mesh; o.material.transparent = true; }
+    if (o.isLineSegments || o.isLine) { o.material.opacity = (o.material.opacity || 1) * P.cover.dim_line; o.material.transparent = true; } });
+  layerLabels.forEach(l => l.material.opacity = 0); axisLabels.forEach(l => l.material.opacity = 0); minorLabels.forEach(l => l.material.opacity = 0); leafLabels.forEach(l => l.material.opacity = 0); };
+window.hideOverlays = function () { ['cap', 'brand', 'legend', 'tail'].forEach(id => $(id).classList.add('hide')); };
+window.renderFrame = function (t) { const tg = camAt(t); setStates(t); setLOD(tg);
+  if (COVER) { farLabels.forEach(sp => sp.material.opacity = 0); minorLabels.forEach(l => l.material.opacity = 0); leafLabels.forEach(l => l.material.opacity = 0); axisLabels.forEach(l => l.material.opacity = 0); layerLabels.forEach(l => l.material.opacity = 0); }
+  setCaption(t); renderer.render(scene, camera); return t; };
+window.settle = function (t, n) { for (let i = 0; i < (n || 14); i++) window.renderFrame(t); return t; };
+window.T_END = T_END;
+window.__LG_INFO = { cover_t: A.length ? +(LA[0] + 0.35).toFixed(2) : 0, bounds: B, R0, center: [CTR.x, CTR.y, CTR.z], lanes: LANES, camera: KF.map(k => ({ t: k.t, az: k.az, el: k.el, r: +k.r.toFixed(2), target: k.target })), lit: { path: LA, release: REL, second: LB, second_release: RELB }, nodes: Object.keys(pos).length, lang: LANG, preset: P.name, fonts: [...new Set((CFG.fonts || []).map(f => f.family))], font_stack: STACK, text_px: PX };
+
+// ---------- fonts → READY ----------
+(async () => { let ok = true; const probes = []; try { for (const f of (CFG.fonts || [])) { const face = new FontFace(f.family, `url(/fonts/${encodeURIComponent(f.file)})`, { weight: f.weight, style: f.style || 'normal' }); document.fonts.add(await face.load()); probes.push(`${(f.weight || '400').split(' ')[0]} 20px "${f.family}"`); } }
+  catch (e) { ok = false; console.error('FONTLOAD', e.message); }
+  await Promise.all(probes.map(p => document.fonts.load(p).catch(() => null)));
+  window.__LG_INFO.fontsOk = ok && probes.every(p => document.fonts.check(p)); rebuildLabels(); window.renderFrame(0); window.READY = true; })();
+</script></body></html>

@@ -1,0 +1,37 @@
+{
+  "name": "ivory-gold",
+  "bg": { "center": "#F5F3EE", "edge": "#ECE9E2", "vignette": 0 },
+  "fog": { "color": "#ECE9E2", "near": 0.6, "far": 1.7 },
+  "floor": { "color": "#FFFFFF", "opacity": 0.40, "opacity_far": 0.18, "edge": "#D9D4C8", "edge_opacity": 0.9 },
+  "node": {
+    "tints": ["#8C9A92", "#93A199", "#85938B", "#98A69E", "#7F8D85", "#8FA095"],
+    "minor_tints": ["#B3BDB7", "#B9C3BD", "#ADB7B1", "#BEC8C2", "#A8B2AC", "#B6C0BA"],
+    "leaf_live": "#6F7D75", "leaf_dim": "#C9CFCB", "leaf_live_scale": 1.3, "leaf_scale": 0.72, "opacity": 0.95
+  },
+  "edge": { "dep": "#B8B3A8", "dep_opacity": 0.45, "link": "#B8B3A8", "link_opacity": 0.36, "member": "#B8B3A8", "member_opacity": 0.42, "leaf": "#B8B3A8", "leaf_opacity": 0.34 },
+  "lit": {
+    "node": "#EBC25B", "glow": "#E3B94A", "tube": "#E3B94A", "tube_radius": 0.07,
+    "tube_glow": { "color": "rgba(214,164,60,0.22)", "width": 4 },
+    "halo_blend": "normal",
+    "halos": [
+      { "color": "rgba(232,196,98,0.45)", "radius": 1.6, "soft": 0.6 },
+      { "color": "rgba(214,164,60,0.18)", "radius": 2.6, "soft": 0.85 }
+    ],
+    "grow": [0.6, 0.15],
+    "spark": true, "spark_color": "#FFF1B8", "spark_scale": 0.55, "spark_opacity": 1.0,
+    "ring": "#C99A2E", "ring_style": "line", "ring_scale": 1.02, "ring_opacity": 1.0
+  },
+  "label": {
+    "layer": "#2B2B2B", "axis": "#5F5B54", "far": "#3F3F3F",
+    "detail_fg": "#2B2B2B", "detail_bg": "rgba(255,255,255,0.88)", "detail_border": "rgba(43,43,43,0.16)",
+    "lit_fg": "#2B2B2B", "lit_bg": "rgba(255,255,255,0.88)", "lit_border": "rgba(201,154,46,0.85)",
+    "radius": 5, "shadow": 0.16
+  },
+  "hud": {
+    "brand_fg": "#2B2B2B", "brand_sub": "#5F5B54", "legend_fg": "#4A4A4A",
+    "caption_fg": "#2B2B2B", "caption_em": "#92701A", "caption_bg": "rgba(255,255,255,0.88)", "caption_border": "rgba(43,43,43,0.12)", "caption_shadow": "0 8px 22px rgba(43,43,43,0.12)",
+    "tail_fg": "#2B2B2B", "tail_bg": "rgba(255,255,255,0.88)", "tail_border": "rgba(201,154,46,0.45)", "radius": 8
+  },
+  "light": { "hemi": 1.0, "ground": "#D9D4C8", "dir": 0.55 },
+  "cover": { "dim_mesh": 0.30, "dim_line": 0.35 }
+}

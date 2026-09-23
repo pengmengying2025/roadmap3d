@@ -1,0 +1,36 @@
+<!DOCTYPE html><html><head><meta charset="utf-8"><title>layergraph strip</title>
+<style>
+  :root{--font:serif}
+  html,body{margin:0;overflow:hidden;font-family:var(--font);letter-spacing:-0.01em}
+  #band{position:absolute;left:0;top:0}
+  .node{position:absolute;top:26px;text-align:center}
+  .dot{width:26px;height:26px;border-radius:50%;margin:0 auto}
+  .dot.minor{width:14px;height:14px;border:6px solid}
+  .dot.leaf{width:20px;height:20px;border-radius:3px;transform:rotate(45deg);margin-top:3px}
+  .g{font-size:15px;margin-top:14px;letter-spacing:.02em}
+  .n{font-size:20px;font-weight:600;line-height:1.2;margin:4px 8px 0}
+  .arrow{position:absolute;top:37px;height:4px;border-radius:2px;opacity:.85}
+  .arrow:after{content:"";position:absolute;right:-2px;top:-6px;border-left:14px solid;border-left-color:inherit;border-top:8px solid transparent;border-bottom:8px solid transparent}
+</style></head><body><div id="band"></div>
+<script type="module">
+/* 2D strip of the highlighted path (for deck appendices / docs). Reads window.__LG like the engine. */
+const CFG = window.__LG; const SPEC = CFG.spec, P = CFG.preset, LANG = CFG.lang || (SPEC.meta && SPEC.meta.lang) || 'en';
+const T = x => x == null ? '' : typeof x === 'string' ? x : (x[LANG] ?? x.en ?? x.zh ?? Object.values(x)[0] ?? '');
+const M = SPEC.meta || {}; const FONTS = M.fonts || {}; const fam = f => Array.isArray(f) ? f.map(x => /^[\w-]+$/.test(x) ? x : '"' + x + '"').join(',') : f;
+const STACK = `${fam(FONTS.family) || '"Times New Roman","Source Serif 4",Georgia'},"${FONTS.cjk || FONTS.serif || 'Noto Serif SC'}","Songti SC","Noto Serif CJK SC",serif`; document.documentElement.style.setProperty('--font', STACK);
+const BGC = typeof P.bg === 'string' ? P.bg : (P.bg.edge || P.bg.center);
+const which = CFG.strip || 'path'; const HL = SPEC.highlight || {}; const ids = which === 'second' ? ((HL.second || {}).path || []) : (HL.path || []); const labels = which === 'second' ? ((HL.second || {}).labels || {}) : (HL.labels || {});
+const order = CFG.stripOrder || 'as-is'; const list = order === 'reverse' ? ids.slice().reverse() : ids;
+const byId = {}; SPEC.nodes.forEach(n => byId[n.id] = n); const layerLabel = {}; SPEC.layers.forEach(l => layerLabel[l.id] = T(l.label));
+const width = CFG.stripWidth || 1500, height = 190; document.body.style.width = width + 'px'; document.body.style.height = height + 'px'; document.body.style.background = CFG.stripBg || BGC;
+const band = document.getElementById('band'); band.style.width = width + 'px'; band.style.height = height + 'px';
+const n = list.length, slot = width / Math.max(n, 1); const dotColor = P.lit.node, arrowColor = P.lit.tube;
+const wrap = s => { if (s.length <= 9) return s; if (s.includes(' · ')) { const i = s.indexOf(' · '); return s.slice(0, i) + '<br>' + s.slice(i + 3); } if (/ /.test(s) && !/[\u3400-\u9fff]/.test(s)) return s; const m = s.match(/^(.{4,8}?[、，,：:—-])(.+)$/); if (m) return m[1] + '<br>' + m[2]; const h = Math.ceil(s.length / 2); return s.slice(0, h) + '<br>' + s.slice(h); };
+list.forEach((id, i) => { const nd = byId[id]; if (!nd) return; const kind = nd.kind || 'major'; const d = document.createElement('div'); d.className = 'node'; d.style.left = (i * slot + slot / 2 - 125) + 'px'; d.style.width = '250px';
+  const dot = `<div class="dot ${kind}" style="background:${kind === 'minor' ? BGC : dotColor};border-color:${dotColor};box-shadow:0 0 0 7px ${P.lit.glow}33"></div>`;
+  d.innerHTML = dot + `<div class="g" style="color:${P.label.far}">${layerLabel[nd.layer] || ''}</div><div class="n" style="color:${P.label.layer}">${wrap(T(labels[id] || nd.short || nd.label))}</div>`; band.appendChild(d);
+  if (i < n - 1) { const a = document.createElement('div'); a.className = 'arrow'; a.style.left = (i * slot + slot / 2 + 30) + 'px'; a.style.width = (slot - 74) + 'px'; a.style.background = arrowColor; a.style.borderLeftColor = arrowColor; band.appendChild(a); } });
+(async () => { try { for (const f of (CFG.fonts || [])) { const face = new FontFace(f.family, `url(/fonts/${encodeURIComponent(f.file)})`, { weight: f.weight, style: f.style || 'normal' }); document.fonts.add(await face.load()); } } catch (e) { console.error('FONTLOAD', e.message); }
+  await document.fonts.ready; window.READY = true; })();
+window.__LG_INFO = { strip: which, count: list.length };
+</script></body></html>
